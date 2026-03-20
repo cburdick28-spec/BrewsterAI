@@ -176,14 +176,21 @@ if not st.session_state.messages:
             "What would you like to know?"
         )
 
-# ── Quick-question chip buttons ────────────────────────────────────────────────
-if not st.session_state.messages:
-    st.markdown("**Quick questions:**")
-    cols = st.columns(2)
+# ── Sidebar: always-visible quick questions ────────────────────────────────────
+with st.sidebar:
+    st.markdown("### 💡 Quick Questions")
+    st.markdown("Click any question to ask it:")
+    st.markdown("---")
     for i, suggestion in enumerate(SUGGESTIONS):
-        if cols[i % 2].button(suggestion, key=f"chip_{i}", use_container_width=True):
+        if st.button(suggestion, key=f"chip_{i}", use_container_width=True):
             st.session_state.pending_input = suggestion
             st.rerun()
+    st.markdown("---")
+    st.markdown(
+        "<small>Powered by Claude AI · Info from "
+        "[brewstermadrid.com](https://www.brewstermadrid.com)</small>",
+        unsafe_allow_html=True,
+    )
 
 # ── Process chip selection ─────────────────────────────────────────────────────
 if st.session_state.pending_input:
@@ -231,12 +238,4 @@ if user_input:
 
     st.session_state.messages.append({"role": "assistant", "content": reply})
 
-# ── Footer ─────────────────────────────────────────────────────────────────────
-st.markdown("""
-<div class="brew-footer">
-    Powered by Claude AI &nbsp;·&nbsp; Information sourced from
-    <a href="https://www.brewstermadrid.com" target="_blank">brewstermadrid.com</a>
-    &nbsp;·&nbsp; For official queries, contact the
-    <a href="https://www.brewstermadrid.com/admissions/contact-us" target="_blank">admissions team</a>
-</div>
-""", unsafe_allow_html=True)
+

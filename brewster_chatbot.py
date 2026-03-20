@@ -469,7 +469,7 @@ with tab_events:
             <div class="event-date">{badge} {event['type']} &nbsp;·&nbsp; {event['date']}</div>
             <div class="event-title">{event['title']}</div>
         </div>""", unsafe_allow_html=True)
-        st.link_button("Register →", event["link"], key=f"ev_{event['date']}")
+        st.link_button(f"Register → {event['title']}", event["link"])
         st.markdown("")
     st.markdown("---")
     st.markdown("📆 Full calendar: [brewstermadrid.com/news-events/school-calendar](https://www.brewstermadrid.com/news-events/school-calendar)")

@@ -47,68 +47,127 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 SCHOOL_KNOWLEDGE = """
 OVERVIEW
 - Full name: Brewster Madrid (part of BA International, LLC — a branch of Brewster Academy)
-- Type: American international K-12 school (Kindergarten through Grade 12)
-- Brewster Academy has 200+ years of history; Madrid campuses opened in 2023
+- Type: American international K-12 school (ages 3–18, Kindergarten through Grade 12)
+- Brewster Academy founded 1820 in Wolfeboro, New Hampshire; 200+ years of history
+- Chamberí campus opened September 2023; La Moraleja campus opened September 2025
 - Motto: "Thrive here, then everywhere"
+- Instagram bio: "The only K-12 American school in the heart of Madrid, redefining education with innovation 🇺🇸🇪🇸"
 - Ranking: #17 nationwide and #13 in Madrid (Micole rankings)
 - Accreditation: Authorized by the Spanish Ministry of Education; accredited by NEASC and the IB Organisation
-- Website: https://www.brewstermadrid.com | Instagram: @brewster_madrid
+- Approximate annual tuition range: €6,365–€23,705 (varies by grade; see website for official figures)
+- Website: https://www.brewstermadrid.com
+- Instagram: @brewster_madrid (3,100+ followers, 491+ posts)
+- LinkedIn: https://www.linkedin.com/company/brewstermadrid/
+- Facebook: https://www.facebook.com/profile.php?id=61567478850476
 
-CAMPUSES
-1. Chamberi Main Campus (Grades K1-10): C. Eloy Gonzalo, 3-5, Madrid 28010 | +34 663 319 387
-2. Chamberi Pre-University Hub (Grades 11-12): C. Magallanes, 1, Madrid 28015
-3. La Moraleja Campus (all grades): P. Conde de los Gaitanes, 23, Alcobendas 28109 | +34 663 562 447
-   Green, spacious, nature-connected environment just outside the city.
+CAMPUSES (3 locations total)
+1. Chamberí Main Campus (Grades K1–10)
+   - Address: C. Eloy Gonzalo, 3-5, Madrid 28010 | Phone: +34 663 319 387
+   - Urban, culturally rich setting in the heart of Madrid
+2. Chamberí Pre-University Hub (Grades 11–12)
+   - Address: C. Magallanes, 1, Madrid 28015 (downstairs to the left of McDonald's)
+   - Dedicated space for Upper School students preparing for university
+   - University rep morning visits held here (10:30–11:05 AM)
+3. La Moraleja Campus (Grades K1–11, opened September 2025)
+   - Address: P. Conde de los Gaitanes, 23, Alcobendas 28109 | Phone: +34 663 562 447
+   - Formerly a monastery — historic exterior preserved, fully modern bright interior
+   - Green, spacious, peaceful neighbourhood just north of central Madrid
+   - Outdoor areas including basketball and volleyball court
+   - Families describe community as "instantly warm and personal"
 
 AT A GLANCE
-- 400+ enrolled students from 45+ countries
+- 400+ enrolled students in Madrid; 340 at Wolfeboro main campus
+- Students from 45+ countries
 - Average class size: 15 students
 - 100% college/university acceptance rate
 - 20+ afternoon extracurricular activities
-- 130+ learning expeditions last year
+- 130+ learning expeditions completed last year
 - 200+ years of Brewster educational tradition
 
 ACADEMICS — THE BREWSTER MODEL®
-- Student-centered, team-based, collaborative teaching
-- Curriculum: American High School Diploma, AP courses, IB Diploma Programme (IBDP)
+- Student-centered, team-based, collaborative teaching (refined over 30+ years)
+- Philosophy: joyful learning, inclusivity, respect for diversity, global citizenship
+- Every student is known by name, story, and potential
+- Curriculum pathways:
+  • American High School Diploma
+  • Advanced Placement (AP) courses
+  • International Baccalaureate Diploma Programme (IBDP)
 - All pathways open doors to universities worldwide
 - Division structure: Lower School, Middle School, Upper School
-- Advisory system: every student has a dedicated adult mentor
-- Pre-University Hub (grades 11-12) at C. Magallanes, 1
-- Learning Expeditions: 130+ hands-on trips; first international trips to Cannes and Brussels this year
+- Advisory system: every student has a dedicated adult mentor/advisor
+- Instructional support integrated into everyday learning
+- Learning Expeditions (130+ last year): Retiro Park, Micropolix, Prado Museum,
+  National Museum of Natural Sciences, and international trips to Cannes & Brussels this year
+- The Brewster Model® is evidence-based and designed so every diverse thinker can THRIVE
 
 UNIVERSITY COUNSELING
-- Dedicated counseling team from early years; offers from Harvard, NYU, IE and more
-- Millions in scholarships; Global University Fair with 60+ institutions
+- Director of University Counseling: Phillip Wenturine
+- In-person university visits to campus from colleges across Europe and the UK (grades 9–12)
+- Offers received from Harvard, NYU, IE, and many more
+- Millions in scholarships awarded to graduates
+- Annual Global University Fair each spring (60+ institutions)
 - 100% university acceptance rate
 
-STUDENT LIFE
-- 20+ afternoon activities (sports, arts, clubs)
-- "American Experience": 7 weeks at Brewster's main campus in Wolfeboro, New Hampshire
-- Community events, student leadership, wellbeing programmes, in-house dining
+STUDENT LIFE (sourced from Instagram, LinkedIn, and website)
+- 20+ afternoon activities: sports, arts, clubs, special interest groups
+- Student-initiated projects: e.g. a student-designed sensory herb garden (Thyme, Rosemary, Sage)
+  started because he has been passionate about houseplants since age 8 and gardening since age 10
+- Lower School Sports Fest: whole-school community event; Middle & High schoolers volunteered as helpers
+- "American Experience" programme (now in its 2nd year):
+  Upper School students spend 7 weeks at Brewster's main Wolfeboro campus in New Hampshire
+  → coursework continues seamlessly; students join dorms, advisory teams, co-curriculars
+  (basketball, skiing/snowboarding, mass media, fitness)
+  → Pen pal exchanges between Madrid and Wolfeboro students (Spanish ↔ English)
+- Community events: Global University Fair, Summer Programs Fair, Brewster Kids Summer Academy
+- Student leadership and wellbeing programmes
+- Monthly menus, in-house dining team
+
+LEADERSHIP TEAM
+- Executive Director of BA International: Matthew Colburn (Jan 2026)
+  Former Acting CAO & Country Director for Peace Corps (20+ countries); COO of KIPP Delta Public Schools;
+  fluent Spanish speaker with nearly 2 decades of international field experience
+- Chamberí Campus Director: Jean Maher
+  39th year in independent school education; former Associate Head of School at Berkshire School, MA;
+  B.A. Spanish Literature (Mount Holyoke College); studied at University of Salamanca
+- La Moraleja Founding Campus Director: Jennifer Pro
+  20 years international education experience; former Head of School in Madrid and Tanzania;
+  curriculum recognised by Harvard Graduate School of Education's Project Zero for place-based learning
+- Network Director of Enrollment & External Affairs: Kat Simison
+  Former Director of International Recruitment at Miss Porter's School; MBA University of Hartford;
+  Fulbright Teaching Assistantship in Spain
+- Director of University Counseling: Phillip Wenturine
+- Former Head of School: Craig Gemmell (10 years at Brewster; stepped down after 3 years leading Spain expansion)
 
 ADMISSIONS
-- Process: Inquire → Visit → Apply
+- Ages: 3–18 (K1 through Grade 12)
+- Process: Inquire → Schedule a Visit → Apply
 - Inquire: https://portals.veracross.eu/brewster_madrid/form/request-info-1/Present%20-%20Account/account-lookup
-- Visit: https://www.brewstermadrid.com/admissions/visit-campus
+- Schedule a visit: https://www.brewstermadrid.com/admissions/visit-campus
 - How to Apply: https://www.brewstermadrid.com/admissions/how-to-apply
 - FAQs: https://www.brewstermadrid.com/admissions/frequently-asked-questions
 - Tuition & Fees 2026-2027: https://www.brewstermadrid.com/admissions/tuition-and-fees-2
-- US Military Families: dedicated support available
-
-LEADERSHIP
-- Executive Director of BA International: Matthew Colburn (Jan 2026)
-- Founding Director La Moraleja: Jennifer Pro
+- Fee range (approx): €6,365–€23,705/year depending on grade and campus
+- US Military Families: dedicated admissions support available
+- Limited spaces remain for 2025–26
 
 UPCOMING EVENTS
-- Open House Chamberi: April 23, 2026 at 4:30 PM
-- Open House La Moraleja: May 7, 2026 at 16:30
 - Virtual Info Session (Academic Pathways & University Counseling): April 9, 2026 at 7 PM
+- Open House — Chamberí: April 23, 2026 at 4:30 PM
+- Open House — La Moraleja: May 7, 2026 at 16:30
+- Annual Global University Fair: every spring (60+ institutions)
+- Brewster Kids Summer Academy: annual summer programme
+
+SOCIAL MEDIA CHANNELS
+- Instagram: @brewster_madrid → https://www.instagram.com/brewster_madrid/
+- LinkedIn: → https://www.linkedin.com/company/brewstermadrid/
+- Facebook: → https://www.facebook.com/profile.php?id=61567478850476
 
 USEFUL LINKS
 - Parent Portal: https://accounts.veracross.eu/brewster_madrid/portals/login
 - School Calendar: https://www.brewstermadrid.com/news-events/school-calendar
 - Careers: https://www.brewstermadrid.com/about/employment
+- Ethics Channel: https://brewsterspain.canaletico.es/
+- Main US campus (Wolfeboro, NH): https://www.brewsteracademy.org
 """
 
 def build_system_prompt(language="English"):

@@ -411,11 +411,16 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown(
-        "<small>Powered by Claude AI · [brewstermadrid.com](https://www.brewstermadrid.com)</small>",
+        "<small><b>Privacy / Privacidad:</b> We don’t store chat transcripts. / No guardamos transcripciones del chat.<br>"
+        "<b>Feedback / Valoración:</b> 👍/👎 is saved only for this session. / 👍/👎 se guarda solo durante esta sesión.</small>",
         unsafe_allow_html=True,
     )
 
-
+    st.markdown("---")
+    st.markdown(
+        "<small>Powered by Claude AI · [brewstermadrid.com](https://www.brewstermadrid.com)</small>",
+        unsafe_allow_html=True,
+    )
 # ══════════════════════════════════════════════════════════════════════════════
 # HEADER
 # ══════════════════════════════════════════════════════════════════════════════

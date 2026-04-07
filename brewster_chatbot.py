@@ -805,4 +805,5 @@ with tab_academics:
         "📄 Academic Programmes",
         "https://www.brewstermadrid.com/academics",
         use_container_width=True,
-   
+           
+    )

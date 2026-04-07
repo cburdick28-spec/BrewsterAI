@@ -43,6 +43,27 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 
 .faq-answer { background: #f4f6fb; border-radius: 10px; padding: 0.9rem 1rem;
               font-size: 0.88rem; color: #4a5568; line-height: 1.7; margin-top: 0.3rem; }
+
+.team-card { background: #fff; border: 1px solid #e2ddd4; border-radius: 16px;
+             padding: 1.4rem 1.2rem; text-align: center; margin-bottom: 0.8rem;
+             box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+.team-avatar { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 0.8rem;
+               background: linear-gradient(135deg,#1a2744,#c9a84c);
+               display: flex; align-items: center; justify-content: center;
+               font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #fff; }
+.team-name  { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: #1a2744; margin-bottom: 0.15rem; }
+.team-role  { font-size: 0.72rem; color: #c9a84c; font-weight: 600; text-transform: uppercase;
+              letter-spacing: 0.08em; margin-bottom: 0.7rem; }
+.team-bio   { font-size: 0.82rem; color: #4a5568; line-height: 1.7; text-align: left; }
+
+.division-card { background: #fff; border-top: 4px solid #c9a84c; border-radius: 0 0 14px 14px;
+                 border-left: 1px solid #e2ddd4; border-right: 1px solid #e2ddd4;
+                 border-bottom: 1px solid #e2ddd4; padding: 1.3rem; margin-bottom: 0.8rem; }
+.division-header { font-family: 'Playfair Display', serif; color: #1a2744; font-size: 1.15rem;
+                   margin-bottom: 0.25rem; }
+.division-grades { font-size: 0.72rem; color: #c9a84c; font-weight: 600; text-transform: uppercase;
+                   letter-spacing: 0.08em; margin-bottom: 0.7rem; }
+.division-detail { font-size: 0.84rem; color: #4a5568; line-height: 1.8; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -350,6 +371,104 @@ NEWS = [
     ),
 ]
 
+TEAM = [
+    {
+        "initials": "JM",
+        "name": "Jean Maher",
+        "role": "Campus Director — Chamberí",
+        "bio": (
+            "Jean is in her 39th year in independent school education and brings a wealth of "
+            "experience to Brewster Madrid's Chamberí campus. She previously served as Associate "
+            "Head of School at Berkshire School in Massachusetts. Jean holds a B.A. in Spanish "
+            "Literature from Mount Holyoke College and studied at the University of Salamanca — "
+            "a true Hispanophile at heart."
+        ),
+    },
+    {
+        "initials": "JP",
+        "name": "Jennifer Pro",
+        "role": "Founding Campus Director — La Moraleja",
+        "bio": (
+            "Jennifer brings 20 years of international education experience to the La Moraleja "
+            "campus. She has served as Head of School in both Madrid and Tanzania, and her "
+            "innovative curriculum work has been recognised by Harvard Graduate School of "
+            "Education's Project Zero for place-based learning. Jennifer is passionate about "
+            "building communities where every student truly belongs."
+        ),
+    },
+    {
+        "initials": "KS",
+        "name": "Kat Simison",
+        "role": "Network Director of Enrollment & External Affairs",
+        "bio": (
+            "Kat is the welcoming face of Brewster Madrid's admissions and outreach. She "
+            "previously served as Director of International Recruitment at Miss Porter's School "
+            "and holds an MBA from the University of Hartford. A Fulbright Teaching Assistant "
+            "in Spain, Kat's deep connection to Spanish culture and education shapes her "
+            "approach to finding the right fit for every family."
+        ),
+    },
+    {
+        "initials": "PW",
+        "name": "Phillip Wenturine",
+        "role": "Director of University Counseling",
+        "bio": (
+            "Phillip leads Brewster Madrid's university counseling programme, guiding Upper "
+            "School students toward their best-fit colleges and universities worldwide. Under "
+            "his guidance, graduates have received offers from Harvard, NYU, IE, and many "
+            "other top institutions. He oversees the Annual Global University Fair each spring "
+            "and coordinates in-person visits from 60+ universities to campus."
+        ),
+    },
+]
+
+SCHOOL_DIVISIONS = [
+    {
+        "emoji": "🌱",
+        "name": "Lower School",
+        "grades": "Ages 3–10 · K1 – Grade 4",
+        "tagline": "Curiosity, joy, and strong foundations",
+        "expect": [
+            "A play-based and inquiry-driven curriculum that nurtures natural curiosity",
+            "Spanish and English language immersion from the very first day",
+            "Learning Expeditions into Madrid's rich cultural landscape (Retiro Park, Prado Museum, and more)",
+            "Dedicated advisory system — every child has a trusted adult mentor",
+            "Small class sizes (avg. 15 students) for personalised attention",
+            "Focus on social-emotional learning, kindness, and global citizenship",
+        ],
+    },
+    {
+        "emoji": "🔭",
+        "name": "Middle School",
+        "grades": "Ages 11–13 · Grades 5–8",
+        "tagline": "Discovery, identity, and broadening horizons",
+        "expect": [
+            "The Brewster Model® — collaborative, team-based, student-centred learning",
+            "Deeper dives into STEM, humanities, arts, and world languages",
+            "Project-based units that connect classroom learning to real-world challenges",
+            "Continued Learning Expeditions, including national and international trips",
+            "Advisory programme that supports academic growth and personal wellbeing",
+            "Introduction to student leadership roles and extracurricular clubs",
+            "20+ afternoon activities: sports, arts, music, robotics, and more",
+        ],
+    },
+    {
+        "emoji": "🚀",
+        "name": "Upper School",
+        "grades": "Ages 14–18 · Grades 9–12",
+        "tagline": "Ambition, achievement, and global readiness",
+        "expect": [
+            "Three rigorous academic pathways: American High School Diploma, AP courses, and the IB Diploma Programme (IBDP)",
+            "100% university acceptance rate — graduates accepted to Harvard, NYU, IE, and more",
+            "Dedicated Director of University Counseling (Phillip Wenturine) guiding every student",
+            "Annual Global University Fair with 60+ institutions visiting campus",
+            "American Experience programme: 7 weeks at Brewster's Wolfeboro, NH campus (dorms, co-curriculars, winter sports)",
+            "Pre-University Hub at C. Magallanes, 1 — a dedicated space for Grades 11–12",
+            "In-person university rep visits (10:30–11:05 AM), millions in scholarships awarded to graduates",
+        ],
+    },
+]
+
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 @st.cache_resource
@@ -439,8 +558,8 @@ st.markdown(
 # ══════════════════════════════════════════════════════════════════════════════
 # TABS
 # ══════════════════════════════════════════════════════════════════════════════
-tab_chat, tab_faq, tab_campuses, tab_events, tab_checklist = st.tabs(
-    ["💬 Chat", "❓ FAQs", "🏫 Campuses", "📅 Events", "✅ Apply Checklist"]
+tab_chat, tab_faq, tab_campuses, tab_events, tab_checklist, tab_team, tab_academics = st.tabs(
+    ["💬 Chat", "❓ FAQs", "🏫 Campuses", "📅 Events", "✅ Apply Checklist", "👥 Meet the Team", "📚 Academics"]
 )
 
 
@@ -639,3 +758,56 @@ with tab_checklist:
         st.success(
             "🎉 All steps complete! The Brewster Madrid team looks forward to welcoming your family."
         )
+
+
+# ── TAB 6: MEET THE TEAM ──────────────────────────────────────────────────────
+with tab_team:
+    st.markdown("### 👥 Meet the Team")
+    st.markdown("Click on a name to learn more about the person.")
+    st.markdown("---")
+    for member in TEAM:
+        with st.expander(f"**{member['name']}** · {member['role']}"):
+            col_avatar, col_bio = st.columns([0.12, 0.88])
+            with col_avatar:
+                st.markdown(
+                    f'<div class="team-avatar" style="margin:0;">{member["initials"]}</div>',
+                    unsafe_allow_html=True,
+                )
+            with col_bio:
+                st.markdown(
+                    f'<div class="team-role">{member["role"]}</div>'
+                    f'<div class="team-bio">{member["bio"]}</div>',
+                    unsafe_allow_html=True,
+                )
+    st.markdown("---")
+    st.markdown(
+        "Learn more about our leadership team at "
+        "[brewstermadrid.com/about](https://www.brewstermadrid.com/about)"
+    )
+
+
+# ── TAB 7: ACADEMICS DEEP-DIVE ────────────────────────────────────────────────
+with tab_academics:
+    st.markdown("### 📚 Academics Deep-Dive")
+    st.markdown(
+        "The **Brewster Model®** — evidence-based, student-centred learning refined over 30+ years — "
+        "flows through every division. Click a school level to see what to expect."
+    )
+    st.markdown("---")
+    for div in SCHOOL_DIVISIONS:
+        with st.expander(f"{div['emoji']} **{div['name']}** · {div['grades']}"):
+            st.markdown(f"*{div['tagline']}*")
+            for point in div["expect"]:
+                st.markdown(f"- {point}")
+    st.markdown("---")
+    ca, cb = st.columns(2)
+    ca.link_button(
+        "📄 Academic Programmes",
+        "https://www.brewstermadrid.com/academics",
+        use_container_width=True,
+    )
+    cb.link_button(
+        "🎓 University Counseling",
+        "https://www.brewstermadrid.com/university-counseling",
+        use_container_width=True,
+    )

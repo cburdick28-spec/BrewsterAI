@@ -805,9 +805,4 @@ with tab_academics:
         "📄 Academic Programmes",
         "https://www.brewstermadrid.com/academics",
         use_container_width=True,
-    )
-    cb.link_button(
-        "🎓 University Counseling",
-        "https://www.brewstermadrid.com/university-counseling",
-        use_container_width=True,
-    )
+   

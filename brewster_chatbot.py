@@ -196,13 +196,24 @@ USEFUL LINKS
 
 
 def build_system_prompt(language="English"):
+    """Build the Claude system prompt, injecting the full school knowledge base.
+
+    The prompt pins the assistant's persona, sets the response language, and
+    embeds SCHOOL_KNOWLEDGE so every reply is grounded in accurate school data.
+
+    Args:
+        language: "English" (default) or "Español" — controls reply language.
+
+    Returns:
+        A string ready to be passed as the ``system`` argument to the API.
+    """
     lang_instruction = (
         "Respond in Spanish. Use warm, professional Spanish suitable for families."
         if language == "Español"
         else "Respond in English."
     )
     return f"""You are the friendly and knowledgeable virtual assistant for Brewster Madrid,
-.an American K-12 school with campuses in Madrid, Spain. {lang_instruction}
+an American K-12 school with campuses in Madrid, Spain. {lang_instruction}
 Use the school knowledge below to answer accurately. Be warm, concise, and welcoming.
 If a detail is not covered, say so honestly and invite the user to contact admissions
 or visit brewstermadrid.com.
@@ -471,13 +482,38 @@ SCHOOL_DIVISIONS = [
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 @st.cache_resource
 def get_client():
+    """Create and cache a single Anthropic client for the app's lifetime.
+
+    ``st.cache_resource`` ensures the client is initialised once per server
+    process, not on every page re-run, which avoids unnecessary object creation.
+
+    Returns:
+        An ``anthropic.Anthropic`` client authenticated with the API key stored
+        in Streamlit Secrets (key: ``ANTHROPIC_API_KEY``).
+    """
     return anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
 
 
 def stream_response(messages, language):
+    """Call the Claude API and yield reply text one chunk at a time.
+
+    Streaming lets the UI display each token as it arrives, which gives the
+    impression of a faster response and a more conversational feel.
+
+    Args:
+        messages: The full conversation history as a list of
+            ``{"role": ..., "content": ...}`` dicts (Anthropic format).
+        language: "English" or "Español" — forwarded to ``build_system_prompt``
+            so the model replies in the chosen language.
+
+    Yields:
+        String chunks of the assistant reply as they stream from the API.
+    """
     client = get_client()
+    # Use the streaming context manager so tokens are yielded incrementally
     with client.messages.stream(
         model="claude-sonnet-4-20250514",
         max_tokens=1000,
@@ -488,21 +524,41 @@ def stream_response(messages, language):
             yield text
 
 # ── Session state ──────────────────────────────────────────────────────────────
+# Initialise all session-state keys once on first load.
+# Checking before assigning preserves state across Streamlit re-runs (e.g. after
+# a button click), so the conversation history and checklist progress persist.
 for key, default in [
-    ("messages", []),
-    ("pending_input", None),
-    ("language", "English"),
-    ("feedback_map", {}),
-    ("checklist_done", set()),
+    ("messages", []),          # chat history: list of {"role", "content"} dicts
+    ("pending_input", None),   # sidebar chip text waiting to be sent as a message
+    ("language", "English"),   # current UI/reply language
+    ("feedback_map", {}),      # per-message 👍/👎: {fb_key: "👍" | "👎"}
+    ("checklist_done", set()), # set of completed step indices in the Apply tab
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# API KEY GUARD
+# Validate that the required secret is present before rendering the app.
+# Without this check the app would crash with an unhelpful KeyError deep inside
+# the Anthropic client — a graceful error message is much more user-friendly.
+# ══════════════════════════════════════════════════════════════════════════════
+if "ANTHROPIC_API_KEY" not in st.secrets:
+    st.error(
+        "⚠️ **Missing API key.** Please add `ANTHROPIC_API_KEY` to your "
+        "Streamlit Secrets (Settings → Secrets) and reload the app."
+    )
+    st.stop()  # halt rendering; nothing below this line will execute
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # SIDEBAR
 # ══════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
+    # ── Language toggle ────────────────────────────────────────────────────
+    # When the user switches languages the session state is updated and the
+    # app re-runs, so the welcome message and all future replies switch too.
     st.markdown("### 🌐 Language / Idioma")
     lang = st.radio(
         "",
@@ -516,6 +572,9 @@ with st.sidebar:
         st.rerun()
 
     st.markdown("---")
+    # ── Quick-question chips ───────────────────────────────────────────────
+    # Each button sets pending_input and triggers a re-run; the chat tab picks
+    # it up on the next render cycle and fires the API call automatically.
     st.markdown("### 💡 Quick Questions")
     for i, suggestion in enumerate(SUGGESTIONS):
         if st.button(suggestion, key=f"chip_{i}", use_container_width=True):
@@ -565,7 +624,8 @@ tab_chat, tab_faq, tab_campuses, tab_events, tab_checklist, tab_team, tab_academ
 
 # ── TAB 1: CHAT ───────────────────────────────────────────────────────────────
 with tab_chat:
-    # Stats bar
+    # ── Stats bar ─────────────────────────────────────────────────────────
+    # Display key school metrics in equal-width columns for a quick overview.
     cols = st.columns(len(STATS))
     for col, (num, lbl) in zip(cols, STATS):
         col.markdown(
@@ -579,7 +639,10 @@ with tab_chat:
         for date, headline, link in NEWS:
             st.markdown(f"**{date}** — [{headline}]({link})")
 
-    # Chat history
+    # ── Chat history ──────────────────────────────────────────────────────
+    # Replay every stored message so the full conversation is visible on
+    # each re-run. The feedback buttons sit below every assistant reply and
+    # persist across re-runs via feedback_map in session state.
     for idx, msg in enumerate(st.session_state.messages):
         with st.chat_message(
             msg["role"], avatar="🎓" if msg["role"] == "assistant" else "🙋"
@@ -604,7 +667,9 @@ with tab_chat:
                     st.session_state.feedback_map[fb_key] = "👎"
                     st.rerun()
 
-    # Welcome message
+    # ── Welcome message ───────────────────────────────────────────────────
+    # Only shown before the first user message so it disappears naturally
+    # once the conversation starts, keeping the UI uncluttered.
     if not st.session_state.messages:
         with st.chat_message("assistant", avatar="🎓"):
             st.markdown(
@@ -615,7 +680,10 @@ with tab_chat:
                 "our school — from admissions and academics to campus life.\n\nWhat would you like to know?"
             )
 
-    # Pending input from sidebar chips
+    # ── Pending input (from sidebar chips) ───────────────────────────────
+    # Sidebar buttons can't call the chat API directly (they trigger a re-run
+    # before the chat_input widget is evaluated), so the text is stored in
+    # session state and consumed here on the very next render cycle.
     if st.session_state.pending_input:
         user_text = st.session_state.pending_input
         st.session_state.pending_input = None
@@ -632,7 +700,9 @@ with tab_chat:
         st.session_state.messages.append({"role": "assistant", "content": full_reply})
         st.rerun()
 
-    # Chat input box
+    # ── Chat input box ────────────────────────────────────────────────────
+    # st.chat_input stays pinned to the bottom of the page automatically.
+    # The placeholder text switches language to match the current setting.
     user_input = st.chat_input(
         "Pregúntame lo que quieras sobre Brewster Madrid…"
         if st.session_state.language == "Español"
@@ -800,10 +870,8 @@ with tab_academics:
             for point in div["expect"]:
                 st.markdown(f"- {point}")
     st.markdown("---")
-    ca, cb = st.columns(2)
-    ca.link_button(
+    st.link_button(
         "📄 Academic Programmes",
         "https://www.brewstermadrid.com/academics",
         use_container_width=True,
-           
     )

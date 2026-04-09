@@ -1,54 +1,68 @@
-import streamlit as st
-import anthropic
-import datetime
+# Import required libraries for the Streamlit web application
+import streamlit as st          # Web framework for creating the chatbot interface
+import anthropic               # AI client for Claude API integration
+import datetime                # Date/time utilities (currently imported but not actively used)
 
-# NOTE: Privacy-focused version
-# - Removed conversation transcript logging (no conversation_log, no CSV export)
-# - Removed Admin tab
-# - Kept per-message 👍/👎 feedback stored only for the current Streamlit session
+# PRIVACY NOTICE: This is a privacy-focused version of the chatbot
+# Key privacy features implemented:
+# - No conversation transcript logging (removed conversation_log and CSV export functionality)
+# - No Admin tab (removed administrative access to user data)
+# - Per-message 👍/👎 feedback is stored only in the current Streamlit session (not persisted)
+# This ensures user conversations are not permanently stored or accessible after the session ends
 
-# ── Page config ───────────────────────────────────────────────────────────────
+# ── PAGE CONFIGURATION ───────────────────────────────────────────────────────────────
+# Configure the Streamlit page with metadata and layout settings
 st.set_page_config(
-    page_title="Brewster Madrid · School Assistant",
-    page_icon="🎓",
-    layout="wide",
+    page_title="Brewster Madrid · School Assistant",  # Browser tab title
+    page_icon="🎓",                                   # Favicon displayed in browser tab
+    layout="wide",                                    # Use full width of browser window
 )
 
-# ── Custom CSS ─────────────────────────────────────────────────────────────────
+# ── CUSTOM STYLESHEET ─────────────────────────────────────────────────────────────────
+# Inject custom CSS to style the application with Brewster Madrid branding
+# This creates a professional, cohesive visual experience throughout the app
 st.markdown("""
 <style>
+/* Import Google Fonts for typography */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap');
 
+/* Apply base font family to all elements */
 html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 
+/* Header section styling - main title and subtitle */
 .brew-header { text-align: center; padding: 1.2rem 0 0.4rem; }
 .brew-title  { font-family: 'Playfair Display', serif; font-size: 2rem; color: #1a2744; margin-bottom: 0.2rem; }
-.brew-title span { color: #c9a84c; }
+.brew-title span { color: #c9a84c; }  /* "Madrid" in gold accent color */
 .brew-sub    { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8896b0; }
 .brew-divider { height: 2px; background: linear-gradient(90deg,transparent,#c9a84c,transparent);
-                border: none; margin: 0.6rem auto; width: 60%; }
+                border: none; margin: 0.6rem auto; width: 60%; }  /* Gold gradient divider */
 
+/* Statistics boxes - display key school metrics in the chat tab */
 .stat-box { background: #f4f6fb; border-radius: 12px; padding: 1rem; text-align: center; border: 1px solid #e2ddd4; }
-.stat-num { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #1a2744; }
-.stat-lbl { font-size: 0.72rem; color: #8896b0; text-transform: uppercase; letter-spacing: 0.08em; }
+.stat-num { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #1a2744; }  /* Large numbers */
+.stat-lbl { font-size: 0.72rem; color: #8896b0; text-transform: uppercase; letter-spacing: 0.08em; }  /* Small labels */
 
+/* Campus comparison cards in the Campuses tab */
 .campus-card { background: #fff; border: 1px solid #e2ddd4; border-radius: 14px; padding: 1.2rem; margin-bottom: 0.8rem; }
 .campus-name { font-family: 'Playfair Display', serif; color: #1a2744; font-size: 1.1rem; margin-bottom: 0.3rem; }
 .campus-detail { font-size: 0.82rem; color: #4a5568; line-height: 1.7; }
 
+/* Event cards in the Events tab - left border accent for visual hierarchy */
 .event-card { background: #fff; border-left: 4px solid #c9a84c; border-radius: 0 10px 10px 0;
               padding: 0.8rem 1rem; margin-bottom: 0.6rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 .event-date { font-size: 0.72rem; color: #c9a84c; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
 .event-title { color: #1a2744; font-weight: 600; font-size: 0.92rem; }
 
+/* FAQ answer styling - light background to distinguish from questions */
 .faq-answer { background: #f4f6fb; border-radius: 10px; padding: 0.9rem 1rem;
               font-size: 0.88rem; color: #4a5568; line-height: 1.7; margin-top: 0.3rem; }
 
+/* Team member cards in the Meet the Team tab */
 .team-card { background: #fff; border: 1px solid #e2ddd4; border-radius: 16px;
              padding: 1.4rem 1.2rem; text-align: center; margin-bottom: 0.8rem;
              box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
 .team-avatar { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 0.8rem;
-               background: linear-gradient(135deg,#1a2744,#c9a84c);
+               background: linear-gradient(135deg,#1a2744,#c9a84c);  /* School colors gradient */
                display: flex; align-items: center; justify-content: center;
                font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #fff; }
 .team-name  { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: #1a2744; margin-bottom: 0.15rem; }
@@ -56,6 +70,7 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
               letter-spacing: 0.08em; margin-bottom: 0.7rem; }
 .team-bio   { font-size: 0.82rem; color: #4a5568; line-height: 1.7; text-align: left; }
 
+/* School division cards in the Academics tab */
 .division-card { background: #fff; border-top: 4px solid #c9a84c; border-radius: 0 0 14px 14px;
                  border-left: 1px solid #e2ddd4; border-right: 1px solid #e2ddd4;
                  border-bottom: 1px solid #e2ddd4; padding: 1.3rem; margin-bottom: 0.8rem; }
@@ -67,7 +82,10 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Knowledge base ─────────────────────────────────────────────────────────────
+# ── KNOWLEDGE BASE ─────────────────────────────────────────────────────────────
+# Comprehensive school information database that serves as the foundation for all AI responses
+# This ensures the chatbot provides accurate, consistent information about Brewster Madrid
+# The knowledge base is embedded into the Claude system prompt for every API call
 SCHOOL_KNOWLEDGE = """
 OVERVIEW
 - Full name: Brewster Madrid (part of BA International, LLC — a branch of Brewster Academy)
@@ -196,22 +214,28 @@ USEFUL LINKS
 
 
 def build_system_prompt(language="English"):
-    """Build the Claude system prompt, injecting the full school knowledge base.
+    """Build the Claude system prompt with injected school knowledge base.
 
-    The prompt pins the assistant's persona, sets the response language, and
-    embeds SCHOOL_KNOWLEDGE so every reply is grounded in accurate school data.
+    This function creates a comprehensive system prompt that:
+    1. Establishes the AI assistant's persona as a Brewster Madrid representative
+    2. Sets the response language based on user preference
+    3. Embeds the complete SCHOOL_KNOWLEDGE database for accurate responses
+    4. Defines response style guidelines for consistent user experience
 
     Args:
-        language: "English" (default) or "Español" — controls reply language.
+        language (str): "English" (default) or "Español" - controls reply language
 
     Returns:
-        A string ready to be passed as the ``system`` argument to the API.
+        str: Complete system prompt string ready for Claude API system parameter
     """
+    # Set language instruction based on user preference
     lang_instruction = (
         "Respond in Spanish. Use warm, professional Spanish suitable for families."
         if language == "Español"
         else "Respond in English."
     )
+    
+    # Construct the complete system prompt with persona, language, knowledge base, and style guide
     return f"""You are the friendly and knowledgeable virtual assistant for Brewster Madrid,
 an American K-12 school with campuses in Madrid, Spain. {lang_instruction}
 Use the school knowledge below to answer accurately. Be warm, concise, and welcoming.
@@ -228,7 +252,12 @@ RESPONSE STYLE:
 """
 
 
-# ── Static data ────────────────────────────────────────────────────────────────
+# ── STATIC DATA STRUCTURES ────────────────────────────────────────────────────────────────
+# These data structures provide content for various UI components throughout the application
+# They are defined once at module level for easy maintenance and consistent presentation
+
+# Quick question suggestions displayed as clickable buttons in the sidebar
+# These help users get started with common inquiries about the school
 SUGGESTIONS = [
     "🏫 Tell me about Brewster Madrid",
     "📍 Where are the campuses?",
@@ -242,6 +271,8 @@ SUGGESTIONS = [
     "🏆 University counseling & results?",
 ]
 
+# Frequently Asked Questions - pre-written answers for common inquiries
+# These provide instant responses without requiring AI API calls, improving performance
 FAQS = [
     {
         "q": "What grades does Brewster Madrid offer?",
@@ -277,6 +308,8 @@ FAQS = [
     },
 ]
 
+# Upcoming school events - displayed in the Events tab with registration links
+# These are manually maintained and should be updated regularly by the school team
 EVENTS = [
     {
         "date": "April 9, 2026 · 7:00 PM",
@@ -298,6 +331,8 @@ EVENTS = [
     },
 ]
 
+# Key school statistics - displayed prominently in the chat tab header
+# These metrics provide quick insights into school size and achievements
 STATS = [
     ("400+", "Enrolled Students"),
     ("45+", "Countries"),
@@ -307,6 +342,8 @@ STATS = [
     ("130+", "Learning Expeditions"),
 ]
 
+# Campus information - displayed in the Campuses tab for comparison
+# Each campus card shows location, grades served, contact info, and unique characteristics
 CAMPUSES = [
     {
         "name": "🏙️ Chamberí — Main Campus",
@@ -331,6 +368,9 @@ CAMPUSES = [
     },
 ]
 
+# Admissions process checklist - interactive steps in the Apply Checklist tab
+# Each step includes title, description, and optional link to relevant resources
+# Progress is tracked in session state and persists during the user session
 CHECKLIST = [
     (
         "Inquire online",
@@ -364,6 +404,8 @@ CHECKLIST = [
     ),
 ]
 
+# Latest news articles - displayed in an expandable section in the chat tab
+# These link to the school's official news updates and blog posts
 NEWS = [
     (
         "Mar 2026",
@@ -382,6 +424,9 @@ NEWS = [
     ),
 ]
 
+# Leadership team information - displayed in the Meet the Team tab
+# Each member has initials for avatar, name, role, and detailed biography
+# This helps families get to know the school's key personnel
 TEAM = [
     {
         "initials": "JM",
@@ -433,6 +478,9 @@ TEAM = [
     },
 ]
 
+# Academic divisions by school level - displayed in the Academics tab
+# Each division includes emoji, name/grades, tagline, and detailed expectations
+# This provides comprehensive information about the educational journey at each level
 SCHOOL_DIVISIONS = [
     {
         "emoji": "🌱",
@@ -481,111 +529,129 @@ SCHOOL_DIVISIONS = [
 ]
 
 
-# ── Helpers ────────────────────────────────────────────────────────────────────
+# ── HELPER FUNCTIONS ────────────────────────────────────────────────────────────────────
+# These utility functions handle API communication and response streaming
 
 @st.cache_resource
 def get_client():
     """Create and cache a single Anthropic client for the app's lifetime.
 
-    ``st.cache_resource`` ensures the client is initialised once per server
-    process, not on every page re-run, which avoids unnecessary object creation.
+    Uses Streamlit's resource caching to ensure the client is initialized only once
+    per server process, not on every page re-run. This improves performance and
+    avoids unnecessary API client object creation.
 
     Returns:
-        An ``anthropic.Anthropic`` client authenticated with the API key stored
-        in Streamlit Secrets (key: ``ANTHROPIC_API_KEY``).
+        anthropic.Anthropic: Authenticated client using API key from Streamlit Secrets
     """
     return anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
 
 
 def stream_response(messages, language):
-    """Call the Claude API and yield reply text one chunk at a time.
+    """Call the Claude API and stream the response token by token.
 
-    Streaming lets the UI display each token as it arrives, which gives the
-    impression of a faster response and a more conversational feel.
+    This function enables real-time response streaming, which provides a better
+    user experience by displaying tokens as they arrive rather than waiting for
+    the complete response.
 
     Args:
-        messages: The full conversation history as a list of
-            ``{"role": ..., "content": ...}`` dicts (Anthropic format).
-        language: "English" or "Español" — forwarded to ``build_system_prompt``
-            so the model replies in the chosen language.
+        messages (list): Full conversation history in Anthropic API format
+                        [{'role': 'user|assistant', 'content': 'text'}, ...]
+        language (str): "English" or "Español" - determines response language
 
     Yields:
-        String chunks of the assistant reply as they stream from the API.
+        str: Individual text chunks as they stream from the Claude API
     """
     client = get_client()
-    # Use the streaming context manager so tokens are yielded incrementally
+    # Use the streaming context manager for incremental token delivery
     with client.messages.stream(
-        model="claude-sonnet-4-20250514",
-        max_tokens=1000,
-        system=build_system_prompt(language),
-        messages=messages,
+        model="claude-sonnet-4-20250514",    # Claude model version
+        max_tokens=1000,                      # Maximum response length
+        system=build_system_prompt(language), # Dynamic system prompt with language preference
+        messages=messages,                    # Full conversation context
     ) as stream:
         for text in stream.text_stream:
-            yield text
+            yield text  # Return each token chunk as it arrives
 
-# ── Session state ──────────────────────────────────────────────────────────────
-# Initialise all session-state keys once on first load.
-# Checking before assigning preserves state across Streamlit re-runs (e.g. after
-# a button click), so the conversation history and checklist progress persist.
-for key, default in [
-    ("messages", []),          # chat history: list of {"role", "content"} dicts
-    ("pending_input", None),   # sidebar chip text waiting to be sent as a message
-    ("language", "English"),   # current UI/reply language
-    ("feedback_map", {}),      # per-message 👍/👎: {fb_key: "👍" | "👎"}
-    ("checklist_done", set()), # set of completed step indices in the Apply tab
-]:
+# ── SESSION STATE INITIALIZATION ──────────────────────────────────────────────────────────────
+# Initialize all session state variables on first app load
+# Session state persists across Streamlit re-runs (triggered by user interactions)
+# This maintains conversation history, user preferences, and UI state during the session
+
+# Define all session state keys with their default values
+SESSION_DEFAULTS = [
+    ("messages", []),          # Chat history: list of message dictionaries with role and content
+    ("pending_input", None),   # Text from sidebar chips waiting to be processed
+    ("language", "English"),   # Current UI language preference ("English" or "Español")
+    ("feedback_map", {}),      # Per-message feedback mapping: {message_index: "👍" or "👎"}
+    ("checklist_done", set()), # Set of completed checklist step indices from Apply tab
+]
+
+# Initialize each session state variable only if it doesn't already exist
+# This preserves existing state during re-runs while setting defaults on first load
+for key, default in SESSION_DEFAULTS:
     if key not in st.session_state:
         st.session_state[key] = default
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# API KEY GUARD
-# Validate that the required secret is present before rendering the app.
-# Without this check the app would crash with an unhelpful KeyError deep inside
-# the Anthropic client — a graceful error message is much more user-friendly.
+# API KEY VALIDATION
+# Critical security check: Ensure the Anthropic API key is available before proceeding
+# This prevents the app from crashing with an unhelpful error message and provides
+# clear guidance to developers on how to fix the configuration issue
 # ══════════════════════════════════════════════════════════════════════════════
 if "ANTHROPIC_API_KEY" not in st.secrets:
+    # Display user-friendly error message with setup instructions
     st.error(
         "⚠️ **Missing API key.** Please add `ANTHROPIC_API_KEY` to your "
         "Streamlit Secrets (Settings → Secrets) and reload the app."
     )
-    st.stop()  # halt rendering; nothing below this line will execute
+    st.stop()  # Halt app execution - nothing below this line will run
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SIDEBAR
+# SIDEBAR COMPONENTS
+# The sidebar provides navigation controls, quick actions, and app settings
+# It remains visible across all tabs and provides consistent user interaction options
 # ══════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
-    # ── Language toggle ────────────────────────────────────────────────────
-    # When the user switches languages the session state is updated and the
-    # app re-runs, so the welcome message and all future replies switch too.
+    # ── LANGUAGE TOGGLE ────────────────────────────────────────────────────
+    # Allows users to switch between English and Spanish interfaces
+    # When changed, updates session state and triggers app re-run to apply new language
     st.markdown("### 🌐 Language / Idioma")
     lang = st.radio(
-        "",
-        ["English", "Español"],
-        horizontal=True,
-        index=0 if st.session_state.language == "English" else 1,
-        label_visibility="collapsed",
+        "",  # Empty label since we have a custom header
+        ["English", "Español"],  # Language options
+        horizontal=True,  # Display buttons side by side
+        index=0 if st.session_state.language == "English" else 1,  # Current selection
+        label_visibility="collapsed",  # Hide default label
     )
+    # If language changed, update session state and re-run app to apply changes
     if lang != st.session_state.language:
         st.session_state.language = lang
         st.rerun()
 
-    st.markdown("---")
-    # ── Quick-question chips ───────────────────────────────────────────────
-    # Each button sets pending_input and triggers a re-run; the chat tab picks
-    # it up on the next render cycle and fires the API call automatically.
+    st.markdown("---")  # Visual separator
+    
+    # ── QUICK QUESTION CHIPS ───────────────────────────────────────────────
+    # Pre-defined question buttons that users can click to start conversations
+    # Each button stores the question text in session state and triggers re-run
+    # The chat tab processes this pending input on the next render cycle
     st.markdown("### 💡 Quick Questions")
     for i, suggestion in enumerate(SUGGESTIONS):
         if st.button(suggestion, key=f"chip_{i}", use_container_width=True):
+            # Store the selected suggestion for processing in the chat tab
             st.session_state.pending_input = suggestion
-            st.rerun()
+            st.rerun()  # Re-run app to process the pending input
 
-    st.markdown("---")
+    st.markdown("---")  # Visual separator
+    
+    # ── CHAT CLEAR BUTTON ───────────────────────────────────────────────────
+    # Allows users to reset the conversation and start fresh
+    # Clears message history and feedback mapping, then re-runs the app
     if st.button("🗑️ Clear Chat", use_container_width=True):
-        st.session_state.messages = []
-        st.session_state.feedback_map = {}
-        st.rerun()
+        st.session_state.messages = []  # Clear conversation history
+        st.session_state.feedback_map = {}  # Clear feedback data
+        st.rerun()  # Re-run app with cleared state
 
     st.markdown("---")
     st.markdown(
@@ -600,7 +666,9 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 # ══════════════════════════════════════════════════════════════════════════════
-# HEADER
+# MAIN HEADER
+# Displays the school name, tagline, and decorative divider using custom CSS classes
+# This creates a professional branded appearance at the top of every page
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown(
     """
@@ -610,7 +678,7 @@ st.markdown(
 </div>
 <hr class="brew-divider"/>
 """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True,  # Allow custom HTML and CSS for styling
 )
 
 
@@ -622,54 +690,67 @@ tab_chat, tab_faq, tab_campuses, tab_events, tab_checklist, tab_team, tab_academ
 )
 
 
-# ── TAB 1: CHAT ───────────────────────────────────────────────────────────────
+# ── TAB 1: CHAT INTERFACE ───────────────────────────────────────────────────────────────
 with tab_chat:
-    # ── Stats bar ─────────────────────────────────────────────────────────
-    # Display key school metrics in equal-width columns for a quick overview.
-    cols = st.columns(len(STATS))
+    # ── SCHOOL STATISTICS BAR ─────────────────────────────────────────────────────────
+    # Display key school metrics in a horizontal row of styled boxes
+    # This provides immediate visual context about school size and achievements
+    cols = st.columns(len(STATS))  # Create equal-width columns for each statistic
     for col, (num, lbl) in zip(cols, STATS):
         col.markdown(
             f'<div class="stat-box"><div class="stat-num">{num}</div><div class="stat-lbl">{lbl}</div></div>',
-            unsafe_allow_html=True,
+            unsafe_allow_html=True,  # Use custom CSS classes for styling
         )
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)  # Add vertical spacing
 
-    # Recent news (static, sourced from site)
+    # ── LATEST NEWS SECTION ───────────────────────────────────────────────────────
+    # Expandable section showing recent school news articles
+    # Content is statically sourced from the school's official news updates
     with st.expander("📰 Latest News from Brewster Madrid", expanded=False):
         for date, headline, link in NEWS:
-            st.markdown(f"**{date}** — [{headline}]({link})")
+            st.markdown(f"**{date}** — [{headline}]({link})")  # Format as clickable links
 
-    # ── Chat history ──────────────────────────────────────────────────────
-    # Replay every stored message so the full conversation is visible on
-    # each re-run. The feedback buttons sit below every assistant reply and
-    # persist across re-runs via feedback_map in session state.
+    # ── CHAT HISTORY DISPLAY ───────────────────────────────────────────────────────
+    # Replay all stored messages to maintain conversation context across re-runs
+    # Each assistant message includes 👍/👎 feedback buttons for user satisfaction tracking
+    # Feedback state persists via session state feedback_map dictionary
     for idx, msg in enumerate(st.session_state.messages):
         with st.chat_message(
-            msg["role"], avatar="🎓" if msg["role"] == "assistant" else "🙋"
+            msg["role"], 
+            avatar="🎓" if msg["role"] == "assistant" else "🙋"  # Different avatars for roles
         ): 
-            st.markdown(msg["content"])
+            st.markdown(msg["content"])  # Display message content
+            
+            # Add feedback buttons only for assistant messages
             if msg["role"] == "assistant":
-                fb_key = f"fb_{idx}"
-                current_fb = st.session_state.feedback_map.get(fb_key)
-                c1, c2, _ = st.columns([1, 1, 10])
+                fb_key = f"fb_{idx}"  # Unique key for this message's feedback
+                current_fb = st.session_state.feedback_map.get(fb_key)  # Get current feedback state
+                
+                # Create layout: feedback buttons + spacer
+                c1, c2, _ = st.columns([1, 1, 10])  # Two small columns for buttons, large spacer
+                
+                # 👍 button - highlights if already selected
                 if c1.button(
                     "👍",
-                    key=f"up_{idx}",
-                    type="primary" if current_fb == "👍" else "secondary",
+                    key=f"up_{idx}",  # Unique key for this button
+                    type="primary" if current_fb == "👍" else "secondary",  # Visual state
                 ):
-                    st.session_state.feedback_map[fb_key] = "👍"
-                    st.rerun()
+                    st.session_state.feedback_map[fb_key] = "👍"  # Record positive feedback
+                    st.rerun()  # Re-run to update button appearance
+                    
+                # 👎 button - highlights if already selected
                 if c2.button(
                     "👎",
-                    key=f"dn_{idx}",
-                    type="primary" if current_fb == "👎" else "secondary",
+                    key=f"dn_{idx}",  # Unique key for this button
+                    type="primary" if current_fb == "👎" else "secondary",  # Visual state
                 ):
-                    st.session_state.feedback_map[fb_key] = "👎"
-                    st.rerun()
+                    st.session_state.feedback_map[fb_key] = "👎"  # Record negative feedback
+                    st.rerun()  # Re-run to update button appearance
 
-    # ── Welcome message ───────────────────────────────────────────────────
-    # Only shown before the first user message so it disappears naturally
-    # once the conversation starts, keeping the UI uncluttered.
+    # ── WELCOME MESSAGE ───────────────────────────────────────────────────────
+    # Display a greeting only when no messages exist yet
+    # This provides context for new users and disappears once conversation begins
+    # Message content adapts based on the selected language preference
     if not st.session_state.messages:
         with st.chat_message("assistant", avatar="🎓"):
             st.markdown(
@@ -680,58 +761,83 @@ with tab_chat:
                 "our school — from admissions and academics to campus life.\n\nWhat would you like to know?"
             )
 
-    # ── Pending input (from sidebar chips) ───────────────────────────────
-    # Sidebar buttons can't call the chat API directly (they trigger a re-run
-    # before the chat_input widget is evaluated), so the text is stored in
-    # session state and consumed here on the very next render cycle.
+    # ── PENDING INPUT PROCESSING (FROM SIDEBAR CHIPS) ────────────────────────────
+    # Handle questions submitted via sidebar quick-question buttons
+    # Sidebar buttons trigger re-run before chat_input is evaluated, so we store
+    # the text in session state and process it here on the next render cycle
     if st.session_state.pending_input:
-        user_text = st.session_state.pending_input
-        st.session_state.pending_input = None
+        user_text = st.session_state.pending_input  # Get the stored question
+        st.session_state.pending_input = None        # Clear pending input
+        
+        # Add user message to conversation history
         st.session_state.messages.append({"role": "user", "content": user_text})
+        
+        # Display user message in chat interface
         with st.chat_message("user", avatar="🙋"):
             st.markdown(user_text)
+            
+        # Generate and display AI response with streaming
         with st.chat_message("assistant", avatar="🎓"):
-            placeholder = st.empty()
-            full_reply = ""
+            placeholder = st.empty()  # Container for streaming response
+            full_reply = ""           # Accumulate complete response
+            
+            # Stream response chunks from Claude API
             for chunk in stream_response(st.session_state.messages, st.session_state.language):
                 full_reply += chunk
-                placeholder.markdown(full_reply + "▌")
-            placeholder.markdown(full_reply)
+                placeholder.markdown(full_reply + "▌")  # Show typing cursor during streaming
+            placeholder.markdown(full_reply)  # Remove cursor when complete
+            
+        # Save assistant response to conversation history
         st.session_state.messages.append({"role": "assistant", "content": full_reply})
-        st.rerun()
+        st.rerun()  # Re-run to update UI with new messages
 
-    # ── Chat input box ────────────────────────────────────────────────────
-    # st.chat_input stays pinned to the bottom of the page automatically.
-    # The placeholder text switches language to match the current setting.
+    # ── CHAT INPUT BOX ────────────────────────────────────────────────────────
+    # Main text input field for user questions
+    # Streamlit automatically pins this to the bottom of the page
+    # Placeholder text adapts to the current language setting
     user_input = st.chat_input(
         "Pregúntame lo que quieras sobre Brewster Madrid…"
         if st.session_state.language == "Español"
         else "Ask me anything about Brewster Madrid…"
     )
+    
+    # Process user input when submitted
     if user_input:
+        # Add user message to conversation history
         st.session_state.messages.append({"role": "user", "content": user_input})
+        
+        # Display user message in chat interface
         with st.chat_message("user", avatar="🙋"):
             st.markdown(user_input)
+            
+        # Generate and display AI response with streaming
         with st.chat_message("assistant", avatar="🎓"):
-            placeholder = st.empty()
-            full_reply = ""
+            placeholder = st.empty()  # Container for streaming response
+            full_reply = ""           # Accumulate complete response
+            
+            # Stream response chunks from Claude API
             for chunk in stream_response(st.session_state.messages, st.session_state.language):
                 full_reply += chunk
-                placeholder.markdown(full_reply + "▌")
-            placeholder.markdown(full_reply)
+                placeholder.markdown(full_reply + "▌")  # Show typing cursor during streaming
+            placeholder.markdown(full_reply)  # Remove cursor when complete
+            
+        # Save assistant response to conversation history
         st.session_state.messages.append({"role": "assistant", "content": full_reply})
-        st.rerun()
+        st.rerun()  # Re-run to update UI with new messages
 
 
-# ── TAB 2: FAQs ───────────────────────────────────────────────────────────────
+# ── TAB 2: FREQUENTLY ASKED QUESTIONS ───────────────────────────────────────────────────────
 with tab_faq:
     st.markdown("### ❓ Frequently Asked Questions")
     st.markdown("Instant answers — no AI call needed.")
     st.markdown("---")
+    
+    # Display each FAQ as an expandable section
+    # Questions act as headers, answers are styled with custom CSS
     for faq in FAQS:
-        with st.expander(faq["q"]):
+        with st.expander(faq["q"]):  # Question becomes the expandable header
             st.markdown(
-                f'<div class="faq-answer">{faq["a"]}</div>',
+                f'<div class="faq-answer">{faq["a"]}</div>',  # Style answer with custom CSS
                 unsafe_allow_html=True,
             )
 
@@ -741,7 +847,11 @@ with tab_campuses:
     st.markdown("### 🏫 Campus Comparison")
     st.markdown("Choose the campus that's right for your family.")
     st.markdown("---")
+    
+    # Create equal-width columns for campus cards
     cols = st.columns(len(CAMPUSES))
+    
+    # Display each campus in its own column with styled card
     for col, campus in zip(cols, CAMPUSES):
         with col:
             st.markdown(
@@ -755,31 +865,42 @@ with tab_campuses:
                     <i>{campus['vibe']}</i>
                 </div>
             </div>""",
-                unsafe_allow_html=True,
+                unsafe_allow_html=True,  # Use custom CSS for card styling
             )
-    st.markdown("---")
+    st.markdown("---")  # Visual separator
     st.markdown("**Which campus suits your child?**")
+    
+    # Create two-column layout for campus recommendations
     ca, cb = st.columns(2)
-    ca.info(
-        "🏙️ **Chamberí** — ideal if you value an urban, culturally immersive Madrid experience."
-    )
-    cb.info(
-        "🌿 **La Moraleja** — ideal if you prefer a quieter, greener campus just outside the city."
-    )
+    with ca:
+        st.info(
+            "🏙️ **Chamberí** — ideal if you value an urban, culturally immersive Madrid experience."
+        )
+    with cb:
+        st.info(
+            "🌿 **La Moraleja** — ideal if you prefer a quieter, greener campus just outside the city."
+        )
+        
+    # Call-to-action button for campus visits
     st.link_button(
         "📅 Schedule a Visit",
         "https://www.brewstermadrid.com/admissions/visit-campus",
-        use_container_width=True,
+        use_container_width=True,  # Make button full width
     )
 
 
-# ── TAB 4: EVENTS ─────────────────────────────────────────────────────────────
+# ── TAB 4: UPCOMING EVENTS ─────────────────────────────────────────────────────────────
 with tab_events:
     st.markdown("### 📅 Upcoming Events")
     st.markdown("Join us — spaces are limited, book early!")
     st.markdown("---")
+    
+    # Display each event with styled card and registration button
     for event in EVENTS:
+        # Choose badge icon based on event type
         badge = "🖥️" if event["type"] == "Virtual" else "📍"
+        
+        # Create styled event card with custom CSS
         st.markdown(
             f"""
         <div class="event-card">
@@ -788,9 +909,14 @@ with tab_events:
         </div>""",
             unsafe_allow_html=True,
         )
+        
+        # Add registration button with event-specific link
         st.link_button(f"Register → {event['title']}", event["link"])
-        st.markdown("")
-    st.markdown("---")
+        st.markdown("")  # Add spacing between events
+        
+    st.markdown("---")  # Visual separator
+    
+    # Link to full school calendar
     st.markdown(
         "📆 Full calendar: [brewstermadrid.com/news-events/school-calendar](https://www.brewstermadrid.com/news-events/school-calendar)"
     )
@@ -801,29 +927,46 @@ with tab_checklist:
     st.markdown("### ✅ Admissions Checklist")
     st.markdown("Your step-by-step guide to joining Brewster Madrid.")
     st.markdown("---")
+    
+    # Get current checklist progress from session state
     done = st.session_state.checklist_done
+    
+    # Display each step as an interactive checkbox with description
     for i, (title, desc, link) in enumerate(CHECKLIST):
-        checked = i in done
+        checked = i in done  # Check if this step is completed
+        
+        # Create layout: checkbox column + content column
         col_check, col_content = st.columns([0.08, 0.92])
+        
         with col_check:
+            # Interactive checkbox that updates session state when clicked
             if st.checkbox("", value=checked, key=f"chk_{i}"):
-                done.add(i)
+                done.add(i)  # Mark step as complete
             else:
-                done.discard(i)
+                done.discard(i)  # Remove completion status
+                
         with col_content:
+            # Apply strikethrough styling to completed steps
             style = "text-decoration: line-through; color: #aab0c0;" if checked else ""
             st.markdown(
                 f'<div style="{style}"><b>Step {i+1}: {title}</b><br>\n'
                 f'<span style="font-size:0.85rem;color:#4a5568;">{desc}</span></div>',
                 unsafe_allow_html=True,
             )
+            
+            # Add clickable link if one is provided for this step
             if link:
-                st.markdown(f"[→ {title}]({link})")
-        st.markdown("")
+                st.markdown(f'[→ {title}]({link})')
+                
+        st.markdown("")  # Add spacing between steps
+        
+    # Display progress bar with completion percentage
     st.progress(
         len(done) / len(CHECKLIST),
         text=f"Progress: {len(done)}/{len(CHECKLIST)} steps complete",
     )
+    
+    # Show success message when all steps are completed
     if len(done) == len(CHECKLIST):
         st.success(
             "🎉 All steps complete! The Brewster Madrid team looks forward to welcoming your family."
@@ -835,21 +978,31 @@ with tab_team:
     st.markdown("### 👥 Meet the Team")
     st.markdown("Click on a name to learn more about the person.")
     st.markdown("---")
+    
+    # Display each team member as an expandable section
     for member in TEAM:
         with st.expander(f"**{member['name']}** · {member['role']}"):
+            # Create layout: avatar column + biography column
             col_avatar, col_bio = st.columns([0.12, 0.88])
+            
             with col_avatar:
+                # Display styled avatar with member initials
                 st.markdown(
                     f'<div class="team-avatar" style="margin:0;">{member["initials"]}</div>',
                     unsafe_allow_html=True,
                 )
+                
             with col_bio:
+                # Display role and biography with custom styling
                 st.markdown(
                     f'<div class="team-role">{member["role"]}</div>'
                     f'<div class="team-bio">{member["bio"]}</div>',
                     unsafe_allow_html=True,
                 )
-    st.markdown("---")
+                
+    st.markdown("---")  # Visual separator
+    
+    # Link to more detailed team information on the school website
     st.markdown(
         "Learn more about our leadership team at "
         "[brewstermadrid.com/about](https://www.brewstermadrid.com/about)"
@@ -864,14 +1017,22 @@ with tab_academics:
         "flows through every division. Click a school level to see what to expect."
     )
     st.markdown("---")
+    
+    # Display each school division as an expandable section
     for div in SCHOOL_DIVISIONS:
         with st.expander(f"{div['emoji']} **{div['name']}** · {div['grades']}"):
+            # Display the division's educational philosophy/tagline
             st.markdown(f"*{div['tagline']}*")
+            
+            # List what students and families can expect in this division
             for point in div["expect"]:
                 st.markdown(f"- {point}")
-    st.markdown("---")
+                
+    st.markdown("---")  # Visual separator
+    
+    # Call-to-action button for more detailed academic information
     st.link_button(
         "📄 Academic Programmes",
         "https://www.brewstermadrid.com/academics",
-        use_container_width=True,
+        use_container_width=True,  # Make button full width
     )

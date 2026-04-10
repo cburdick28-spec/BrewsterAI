@@ -213,29 +213,20 @@ USEFUL LINKS
 """
 
 
+# This function builds the "instructions" we give the AI before every conversation
+# Think of it like telling a substitute teacher the classroom rules before they start
+# We tell the AI: who it is, what language to speak, and give it the school fact book
 def build_system_prompt(language="English"):
-    """Build the Claude system prompt with injected school knowledge base.
-
-    This function creates a comprehensive system prompt that:
-    1. Establishes the AI assistant's persona as a Brewster Madrid representative
-    2. Sets the response language based on user preference
-    3. Embeds the complete SCHOOL_KNOWLEDGE database for accurate responses
-    4. Defines response style guidelines for consistent user experience
-
-    Args:
-        language (str): "English" (default) or "Español" - controls reply language
-
-    Returns:
-        str: Complete system prompt string ready for Claude API system parameter
-    """
-    # Set language instruction based on user preference
+    # Figure out which language the AI should reply in
+    # If the user picked Spanish, tell the AI to use Spanish; otherwise use English
     lang_instruction = (
         "Respond in Spanish. Use warm, professional Spanish suitable for families."
         if language == "Español"
         else "Respond in English."
     )
-    
-    # Construct the complete system prompt with persona, language, knowledge base, and style guide
+
+    # Stick everything together into one big set of instructions for the AI
+    # This becomes the AI's "brain briefing" before it answers any question
     return f"""You are the friendly and knowledgeable virtual assistant for Brewster Madrid,
 an American K-12 school with campuses in Madrid, Spain. {lang_instruction}
 Use the school knowledge below to answer accurately. Be warm, concise, and welcoming.
@@ -252,12 +243,12 @@ RESPONSE STYLE:
 """
 
 
-# ── STATIC DATA STRUCTURES ────────────────────────────────────────────────────────────────
-# These data structures provide content for various UI components throughout the application
-# They are defined once at module level for easy maintenance and consistent presentation
+# ── LISTS OF THINGS WE SHOW ON THE SCREEN ────────────────────────────────────────────────
+# These are like pre-written lists of information the website uses to fill in different sections
+# We write them once here and reuse them in many places — like a recipe book
 
-# Quick question suggestions displayed as clickable buttons in the sidebar
-# These help users get started with common inquiries about the school
+# These are the shortcut question buttons that appear on the side of the screen
+# When someone clicks one, it automatically fills in the chat box for them — super handy!
 SUGGESTIONS = [
     "🏫 Tell me about Brewster Madrid",
     "📍 Where are the campuses?",
@@ -271,8 +262,8 @@ SUGGESTIONS = [
     "🏆 University counseling & results?",
 ]
 
-# Frequently Asked Questions - pre-written answers for common inquiries
-# These provide instant responses without requiring AI API calls, improving performance
+# A list of common questions AND their ready-made answers
+# These answers appear instantly without needing to ask the AI — like a cheat sheet!
 FAQS = [
     {
         "q": "What grades does Brewster Madrid offer?",
@@ -308,8 +299,8 @@ FAQS = [
     },
 ]
 
-# Upcoming school events - displayed in the Events tab with registration links
-# These are manually maintained and should be updated regularly by the school team
+# A list of upcoming school events (like open days when families can visit)
+# Each event has a date, a name, whether it's online or in person, and a link to sign up
 EVENTS = [
     {
         "date": "April 9, 2026 · 7:00 PM",
@@ -331,8 +322,8 @@ EVENTS = [
     },
 ]
 
-# Key school statistics - displayed prominently in the chat tab header
-# These metrics provide quick insights into school size and achievements
+# Cool school facts shown at the top of the chat page — like trophies in a display case
+# Each one is a pair: the big number and the label that describes what it means
 STATS = [
     ("400+", "Enrolled Students"),
     ("45+", "Countries"),
@@ -342,8 +333,8 @@ STATS = [
     ("130+", "Learning Expeditions"),
 ]
 
-# Campus information - displayed in the Campuses tab for comparison
-# Each campus card shows location, grades served, contact info, and unique characteristics
+# Information about each school building (campus) — shown side by side so families can compare
+# Each campus card tells you the grades it has, the address, phone number, and what it feels like
 CAMPUSES = [
     {
         "name": "🏙️ Chamberí — Main Campus",
@@ -368,9 +359,8 @@ CAMPUSES = [
     },
 ]
 
-# Admissions process checklist - interactive steps in the Apply Checklist tab
-# Each step includes title, description, and optional link to relevant resources
-# Progress is tracked in session state and persists during the user session
+# A step-by-step to-do list for joining the school — like a treasure map with checkboxes
+# Each step has a title, a short explanation of what to do, and a link if there is one to click
 CHECKLIST = [
     (
         "Inquire online",
@@ -404,8 +394,8 @@ CHECKLIST = [
     ),
 ]
 
-# Latest news articles - displayed in an expandable section in the chat tab
-# These link to the school's official news updates and blog posts
+# Recent news stories from the school — like the headlines in a school newsletter
+# Each one has the month it was posted, the story title, and a link to read the full article
 NEWS = [
     (
         "Mar 2026",
@@ -424,9 +414,8 @@ NEWS = [
     ),
 ]
 
-# Leadership team information - displayed in the Meet the Team tab
-# Each member has initials for avatar, name, role, and detailed biography
-# This helps families get to know the school's key personnel
+# Information about the people who run the school — shown in the "Meet the Team" tab
+# Each person has their initials (for a little profile picture), their name, job title, and a short biography
 TEAM = [
     {
         "initials": "JM",
@@ -478,9 +467,8 @@ TEAM = [
     },
 ]
 
-# Academic divisions by school level - displayed in the Academics tab
-# Each division includes emoji, name/grades, tagline, and detailed expectations
-# This provides comprehensive information about the educational journey at each level
+# Information about the three school levels (young kids, middle kids, older kids)
+# Each section has an emoji, the name, the grade range, a tagline, and a list of things students get to do there
 SCHOOL_DIVISIONS = [
     {
         "emoji": "🌱",
@@ -529,131 +517,109 @@ SCHOOL_DIVISIONS = [
 ]
 
 
-# ── HELPER FUNCTIONS ────────────────────────────────────────────────────────────────────
-# These utility functions handle API communication and response streaming
+# ── HELPER FUNCTIONS ───────────────────────────────────────────────────────────────────
+# These are like little machines that do specific jobs — we call them whenever we need them
 
+# The @st.cache_resource sticker means: only make this once and keep reusing the same one
+# (Like making one key to a door instead of making a new key every time you want to open it)
 @st.cache_resource
 def get_client():
-    """Create and cache a single Anthropic client for the app's lifetime.
-
-    Uses Streamlit's resource caching to ensure the client is initialized only once
-    per server process, not on every page re-run. This improves performance and
-    avoids unnecessary API client object creation.
-
-    Returns:
-        anthropic.Anthropic: Authenticated client using API key from Streamlit Secrets
-    """
+    # This function creates our "phone" to call the AI
+    # We only build it once and keep it, so we don't waste time building it over and over
+    # st.secrets["ANTHROPIC_API_KEY"] is like our secret password that lets us use the AI
     return anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
 
 
+# This function asks the AI a question and shows the answer word by word as it arrives
+# It's like watching someone type a message in real time instead of waiting for the whole thing
 def stream_response(messages, language):
-    """Call the Claude API and stream the response token by token.
-
-    This function enables real-time response streaming, which provides a better
-    user experience by displaying tokens as they arrive rather than waiting for
-    the complete response.
-
-    Args:
-        messages (list): Full conversation history in Anthropic API format
-                        [{'role': 'user|assistant', 'content': 'text'}, ...]
-        language (str): "English" or "Español" - determines response language
-
-    Yields:
-        str: Individual text chunks as they stream from the Claude API
-    """
+    # Get our AI "phone" so we can make the call
     client = get_client()
-    # Use the streaming context manager for incremental token delivery
+    # Open a live connection to the AI and start receiving the answer piece by piece
     with client.messages.stream(
-        model="claude-sonnet-4-20250514",    # Claude model version
-        max_tokens=1000,                      # Maximum response length
-        system=build_system_prompt(language), # Dynamic system prompt with language preference
-        messages=messages,                    # Full conversation context
+        model="claude-sonnet-4-20250514",    # Which version of the AI brain to use
+        max_tokens=1000,                      # Stop after 1000 words so answers don't go on forever
+        system=build_system_prompt(language), # Hand the AI its instructions and language setting
+        messages=messages,                    # Send the whole conversation so the AI remembers context
     ) as stream:
         for text in stream.text_stream:
-            yield text  # Return each token chunk as it arrives
+            yield text  # Send each small piece of the answer back as soon as it arrives
 
-# ── SESSION STATE INITIALIZATION ──────────────────────────────────────────────────────────────
-# Initialize all session state variables on first app load
-# Session state persists across Streamlit re-runs (triggered by user interactions)
-# This maintains conversation history, user preferences, and UI state during the session
+# ── REMEMBERING THINGS WHILE THE APP IS OPEN ──────────────────────────────────────────────
+# Streamlit forgets everything every time something happens on the page (like clicking a button)
+# "session_state" is like a little backpack the app carries around — it keeps important stuff safe
+# We set up the backpack here with all the things we want to remember
 
-# Define all session state keys with their default values
+# This is our packing list — what goes IN the backpack and what each thing starts as
 SESSION_DEFAULTS = [
-    ("messages", []),          # Chat history: list of message dictionaries with role and content
-    ("pending_input", None),   # Text from sidebar chips waiting to be processed
-    ("language", "English"),   # Current UI language preference ("English" or "Español")
-    ("feedback_map", {}),      # Per-message feedback mapping: {message_index: "👍" or "👎"}
-    ("checklist_done", set()), # Set of completed checklist step indices from Apply tab
+    ("messages", []),          # The list of all chat messages (starts empty — no messages yet)
+    ("pending_input", None),   # A question waiting to be sent (starts as nothing)
+    ("language", "English"),   # Which language to use (starts as English)
+    ("feedback_map", {}),      # A dictionary of thumbs up/down votes per message (starts empty)
+    ("checklist_done", set()), # Which checklist steps have been ticked off (starts as none)
 ]
 
-# Initialize each session state variable only if it doesn't already exist
-# This preserves existing state during re-runs while setting defaults on first load
+# Go through each item in our packing list and put it in the backpack — but ONLY if it's not already in there
+# (We don't want to wipe out things the user already did just because the page refreshed)
 for key, default in SESSION_DEFAULTS:
     if key not in st.session_state:
         st.session_state[key] = default
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# API KEY VALIDATION
-# Critical security check: Ensure the Anthropic API key is available before proceeding
-# This prevents the app from crashing with an unhelpful error message and provides
-# clear guidance to developers on how to fix the configuration issue
-# ══════════════════════════════════════════════════════════════════════════════
+# ── CHECKING WE HAVE THE SECRET KEY ────────────────────────────────────────────────────────
+# Before anything else, we check that the secret AI password (API key) exists
+# Without it the AI can't work — like trying to unlock a door without the key
+# If it's missing, we show a helpful message and stop the app right there
 if "ANTHROPIC_API_KEY" not in st.secrets:
-    # Display user-friendly error message with setup instructions
+    # Tell the user clearly that the key is missing and how to fix it
     st.error(
         "⚠️ **Missing API key.** Please add `ANTHROPIC_API_KEY` to your "
         "Streamlit Secrets (Settings → Secrets) and reload the app."
     )
-    st.stop()  # Halt app execution - nothing below this line will run
+    st.stop()  # Stop the whole app here — nothing else should run without the key
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SIDEBAR COMPONENTS
-# The sidebar provides navigation controls, quick actions, and app settings
-# It remains visible across all tabs and provides consistent user interaction options
-# ══════════════════════════════════════════════════════════════════════════════
+# ── THE SIDE PANEL ─────────────────────────────────────────────────────────────────────────
+# This is the strip on the left side of the screen that always stays visible
+# It has the language switcher, shortcut question buttons, and a clear chat button
 with st.sidebar:
-    # ── LANGUAGE TOGGLE ────────────────────────────────────────────────────
-    # Allows users to switch between English and Spanish interfaces
-    # When changed, updates session state and triggers app re-run to apply new language
+    # ── LANGUAGE SWITCHER ────────────────────────────────────────────────────────────────
+    # Two buttons: English or Spanish — the user picks which language they want
     st.markdown("### 🌐 Language / Idioma")
     lang = st.radio(
-        "",  # Empty label since we have a custom header
-        ["English", "Español"],  # Language options
-        horizontal=True,  # Display buttons side by side
-        index=0 if st.session_state.language == "English" else 1,  # Current selection
-        label_visibility="collapsed",  # Hide default label
+        "",  # No label text — we already have the heading above
+        ["English", "Español"],  # The two choices to pick from
+        horizontal=True,  # Show both buttons side by side instead of stacked
+        index=0 if st.session_state.language == "English" else 1,  # Which one is highlighted right now
+        label_visibility="collapsed",  # Hide the empty label so it does not leave a blank space
     )
-    # If language changed, update session state and re-run app to apply changes
+    # If the user just switched language, save the new choice and refresh the page
     if lang != st.session_state.language:
         st.session_state.language = lang
-        st.rerun()
+        st.rerun()  # Refresh so all text on the page updates to the new language
 
-    st.markdown("---")  # Visual separator
-    
-    # ── QUICK QUESTION CHIPS ───────────────────────────────────────────────
-    # Pre-defined question buttons that users can click to start conversations
-    # Each button stores the question text in session state and triggers re-run
-    # The chat tab processes this pending input on the next render cycle
+    st.markdown("---")  # Draw a thin line to separate sections
+
+    # ── SHORTCUT QUESTION BUTTONS ────────────────────────────────────────────────────────
+    # These are like ready-made question stickers — click one and it gets sent to the chat automatically
     st.markdown("### 💡 Quick Questions")
-    for i, suggestion in enumerate(SUGGESTIONS):
-        if st.button(suggestion, key=f"chip_{i}", use_container_width=True):
-            # Store the selected suggestion for processing in the chat tab
+    for i, suggestion in enumerate(SUGGESTIONS):  # Go through every suggestion in our list
+        if st.button(suggestion, key=f"chip_{i}", use_container_width=True):  # Make a button for each one
+            # Save the question so the chat tab can pick it up and ask it
             st.session_state.pending_input = suggestion
-            st.rerun()  # Re-run app to process the pending input
+            st.rerun()  # Refresh the page so the chat tab sees the new pending question
 
-    st.markdown("---")  # Visual separator
-    
-    # ── CHAT CLEAR BUTTON ───────────────────────────────────────────────────
-    # Allows users to reset the conversation and start fresh
-    # Clears message history and feedback mapping, then re-runs the app
+    st.markdown("---")  # Draw a line to separate sections
+
+    # ── CLEAR CHAT BUTTON ────────────────────────────────────────────────────────────────
+    # This wipes the whole conversation clean — like erasing a whiteboard
     if st.button("🗑️ Clear Chat", use_container_width=True):
-        st.session_state.messages = []  # Clear conversation history
-        st.session_state.feedback_map = {}  # Clear feedback data
-        st.rerun()  # Re-run app with cleared state
+        st.session_state.messages = []       # Delete all the saved messages
+        st.session_state.feedback_map = {}   # Delete all the thumbs up/down votes too
+        st.rerun()  # Refresh so the empty chat appears straight away
 
     st.markdown("---")
+    # Show a small privacy reminder at the bottom of the sidebar
     st.markdown(
         "<small><b>Privacy / Privacidad:</b> We don’t store chat transcripts. / No guardamos transcripciones del chat.<br>"
         "<b>Feedback / Valoración:</b> 👍/👎 is saved only for this session. / 👍/👎 se guarda solo durante esta sesión.</small>",
@@ -661,15 +627,14 @@ with st.sidebar:
     )
 
     st.markdown("---")
+    # Tiny credit line at the very bottom of the sidebar
     st.markdown(
         "<small>Powered by Claude AI · [brewstermadrid.com](https://www.brewstermadrid.com)</small>",
         unsafe_allow_html=True,
     )
-# ══════════════════════════════════════════════════════════════════════════════
-# MAIN HEADER
-# Displays the school name, tagline, and decorative divider using custom CSS classes
-# This creates a professional branded appearance at the top of every page
-# ══════════════════════════════════════════════════════════════════════════════
+# ── BIG TITLE AT THE TOP OF THE PAGE ──────────────────────────────────────────────────────
+# This draws the school name and a gold dividing line at the very top
+# We write it in HTML so we can use the fancy custom styles from the CSS section above
 st.markdown(
     """
 <div class="brew-header">
@@ -678,79 +643,77 @@ st.markdown(
 </div>
 <hr class="brew-divider"/>
 """,
-    unsafe_allow_html=True,  # Allow custom HTML and CSS for styling
+    unsafe_allow_html=True,  # This must be True so the HTML styling actually works
 )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# TABS
-# ══════════════════════════════════════════════════════════════════════════════
+# ── THE TAB BUTTONS ACROSS THE TOP OF THE PAGE ────────────────────────────────────────────
+# These create the row of clickable tabs — like dividers in a binder — one for each section
+# Each tab has its own content that only shows when you click on it
 tab_chat, tab_faq, tab_campuses, tab_events, tab_checklist, tab_team, tab_academics = st.tabs(
     ["💬 Chat", "❓ FAQs", "🏫 Campuses", "📅 Events", "✅ Apply Checklist", "👥 Meet the Team", "📚 Academics"]
 )
 
 
-# ── TAB 1: CHAT INTERFACE ───────────────────────────────────────────────────────────────
+# ── TAB 1: THE MAIN CHAT PAGE ─────────────────────────────────────────────────────────────
 with tab_chat:
-    # ── SCHOOL STATISTICS BAR ─────────────────────────────────────────────────────────
-    # Display key school metrics in a horizontal row of styled boxes
-    # This provides immediate visual context about school size and achievements
-    cols = st.columns(len(STATS))  # Create equal-width columns for each statistic
-    for col, (num, lbl) in zip(cols, STATS):
+    # ── ROW OF SCHOOL FACT BOXES ──────────────────────────────────────────────────────────
+    # Show the cool school numbers (like 400+ students) in a row of little boxes at the top
+    cols = st.columns(len(STATS))  # Make one column for each number — they sit side by side
+    for col, (num, lbl) in zip(cols, STATS):  # Go through each stat and put it in its column
         col.markdown(
             f'<div class="stat-box"><div class="stat-num">{num}</div><div class="stat-lbl">{lbl}</div></div>',
-            unsafe_allow_html=True,  # Use custom CSS classes for styling
+            unsafe_allow_html=True,  # Must be True so the HTML box styling works
         )
-    st.markdown("<br>", unsafe_allow_html=True)  # Add vertical spacing
+    st.markdown("<br>", unsafe_allow_html=True)  # Add a little gap of space below the boxes
 
-    # ── LATEST NEWS SECTION ───────────────────────────────────────────────────────
-    # Expandable section showing recent school news articles
-    # Content is statically sourced from the school's official news updates
+    # ── RECENT NEWS STORIES ───────────────────────────────────────────────────────────────
+    # A foldable/expandable box showing the latest school news — click to open it
+    # starts closed (expanded=False) so it does not take up too much space
     with st.expander("📰 Latest News from Brewster Madrid", expanded=False):
-        for date, headline, link in NEWS:
-            st.markdown(f"**{date}** — [{headline}]({link})")  # Format as clickable links
+        for date, headline, link in NEWS:  # Loop through every news story
+            st.markdown(f"**{date}** — [{headline}]({link})")  # Show the date and a clickable headline
 
-    # ── CHAT HISTORY DISPLAY ───────────────────────────────────────────────────────
-    # Replay all stored messages to maintain conversation context across re-runs
-    # Each assistant message includes 👍/👎 feedback buttons for user satisfaction tracking
-    # Feedback state persists via session state feedback_map dictionary
-    for idx, msg in enumerate(st.session_state.messages):
+    # ── SHOW ALL PAST CHAT MESSAGES ───────────────────────────────────────────────────────
+    # Go through every saved message and draw it on screen in order
+    # This is how the conversation history stays visible even after the page refreshes
+    for idx, msg in enumerate(st.session_state.messages):  # idx = the message number (0, 1, 2...)
         with st.chat_message(
-            msg["role"], 
-            avatar="🎓" if msg["role"] == "assistant" else "🙋"  # Different avatars for roles
-        ): 
-            st.markdown(msg["content"])  # Display message content
-            
-            # Add feedback buttons only for assistant messages
+            msg["role"],
+            avatar="🎓" if msg["role"] == "assistant" else "🙋"  # Robot gets a graduation cap, human gets a person emoji
+        ):
+            st.markdown(msg["content"])  # Actually show the text of the message
+
+            # Only AI messages get thumbs up/down buttons — not the human's messages
             if msg["role"] == "assistant":
-                fb_key = f"fb_{idx}"  # Unique key for this message's feedback
-                current_fb = st.session_state.feedback_map.get(fb_key)  # Get current feedback state
-                
-                # Create layout: feedback buttons + spacer
-                c1, c2, _ = st.columns([1, 1, 10])  # Two small columns for buttons, large spacer
-                
-                # 👍 button - highlights if already selected
+                fb_key = f"fb_{idx}"  # A unique name for this message's vote (e.g. fb_0, fb_1)
+                current_fb = st.session_state.feedback_map.get(fb_key)  # Check if they already voted
+
+                # Make three columns: one for 👍, one for 👎, and a big empty gap
+                c1, c2, _ = st.columns([1, 1, 10])
+
+                # 👍 button — turns bold/highlighted if the user already clicked it
                 if c1.button(
                     "👍",
-                    key=f"up_{idx}",  # Unique key for this button
-                    type="primary" if current_fb == "👍" else "secondary",  # Visual state
+                    key=f"up_{idx}",  # Unique name so each message has its own button
+                    type="primary" if current_fb == "👍" else "secondary",  # Primary = highlighted
                 ):
-                    st.session_state.feedback_map[fb_key] = "👍"  # Record positive feedback
-                    st.rerun()  # Re-run to update button appearance
-                    
-                # 👎 button - highlights if already selected
+                    st.session_state.feedback_map[fb_key] = "👍"  # Save that they liked this answer
+                    st.rerun()  # Refresh so the button shows as highlighted
+
+                # 👎 button — turns bold/highlighted if the user already clicked it
                 if c2.button(
                     "👎",
-                    key=f"dn_{idx}",  # Unique key for this button
-                    type="primary" if current_fb == "👎" else "secondary",  # Visual state
+                    key=f"dn_{idx}",  # Unique name so each message has its own button
+                    type="primary" if current_fb == "👎" else "secondary",  # Primary = highlighted
                 ):
-                    st.session_state.feedback_map[fb_key] = "👎"  # Record negative feedback
-                    st.rerun()  # Re-run to update button appearance
+                    st.session_state.feedback_map[fb_key] = "👎"  # Save that they disliked this answer
+                    st.rerun()  # Refresh so the button shows as highlighted
 
-    # ── WELCOME MESSAGE ───────────────────────────────────────────────────────
-    # Display a greeting only when no messages exist yet
-    # This provides context for new users and disappears once conversation begins
-    # Message content adapts based on the selected language preference
+    # ── GREETING MESSAGE ──────────────────────────────────────────────────────────────────
+    # If nobody has typed anything yet, show a friendly welcome note
+    # Once the conversation starts, this disappears — it is just there for first-time visitors
+    # The greeting changes language depending on what the user picked
     if not st.session_state.messages:
         with st.chat_message("assistant", avatar="🎓"):
             st.markdown(
@@ -761,97 +724,95 @@ with tab_chat:
                 "our school — from admissions and academics to campus life.\n\nWhat would you like to know?"
             )
 
-    # ── PENDING INPUT PROCESSING (FROM SIDEBAR CHIPS) ────────────────────────────
-    # Handle questions submitted via sidebar quick-question buttons
-    # Sidebar buttons trigger re-run before chat_input is evaluated, so we store
-    # the text in session state and process it here on the next render cycle
+    # ── HANDLE A QUESTION CLICKED FROM THE SIDEBAR ───────────────────────────────────────
+    # When someone clicks a shortcut button in the side panel, the question gets saved
+    # We check here if there is a saved question waiting — if yes, we send it to the AI
     if st.session_state.pending_input:
-        user_text = st.session_state.pending_input  # Get the stored question
-        st.session_state.pending_input = None        # Clear pending input
-        
-        # Add user message to conversation history
+        user_text = st.session_state.pending_input  # Grab the saved question
+        st.session_state.pending_input = None        # Clear it so we don't ask it twice
+
+        # Add the question to our list of messages so it shows in the chat
         st.session_state.messages.append({"role": "user", "content": user_text})
-        
-        # Display user message in chat interface
+
+        # Draw the user's question bubble on screen
         with st.chat_message("user", avatar="🙋"):
             st.markdown(user_text)
-            
-        # Generate and display AI response with streaming
+
+        # Draw the AI's reply bubble and fill it in word by word as it arrives
         with st.chat_message("assistant", avatar="🎓"):
-            placeholder = st.empty()  # Container for streaming response
-            full_reply = ""           # Accumulate complete response
-            
-            # Stream response chunks from Claude API
+            placeholder = st.empty()  # An empty box we will fill in as words arrive
+            full_reply = ""           # We build the full answer here piece by piece
+
+            # Ask the AI and add each small chunk to our answer as it streams in
             for chunk in stream_response(st.session_state.messages, st.session_state.language):
                 full_reply += chunk
-                placeholder.markdown(full_reply + "▌")  # Show typing cursor during streaming
-            placeholder.markdown(full_reply)  # Remove cursor when complete
-            
-        # Save assistant response to conversation history
-        st.session_state.messages.append({"role": "assistant", "content": full_reply})
-        st.rerun()  # Re-run to update UI with new messages
+                placeholder.markdown(full_reply + "▌")  # The ▌ acts like a blinking cursor
+            placeholder.markdown(full_reply)  # Remove the cursor once the answer is complete
 
-    # ── CHAT INPUT BOX ────────────────────────────────────────────────────────
-    # Main text input field for user questions
-    # Streamlit automatically pins this to the bottom of the page
-    # Placeholder text adapts to the current language setting
+        # Save the AI's answer to our message list so it stays visible
+        st.session_state.messages.append({"role": "assistant", "content": full_reply})
+        st.rerun()  # Refresh the page to show everything neatly
+
+    # ── THE TEXT BOX WHERE USERS TYPE THEIR QUESTION ─────────────────────────────────────
+    # This is the main typing bar at the bottom of the chat — Streamlit sticks it there automatically
+    # The placeholder text inside it changes to Spanish if the user picked Spanish
     user_input = st.chat_input(
         "Pregúntame lo que quieras sobre Brewster Madrid…"
         if st.session_state.language == "Español"
         else "Ask me anything about Brewster Madrid…"
     )
-    
-    # Process user input when submitted
+
+    # If the user typed something and pressed Enter, this block runs
     if user_input:
-        # Add user message to conversation history
+        # Save the new message to our list so it stays in the conversation
         st.session_state.messages.append({"role": "user", "content": user_input})
-        
-        # Display user message in chat interface
+
+        # Show the user's message as a chat bubble with a person emoji
         with st.chat_message("user", avatar="🙋"):
             st.markdown(user_input)
-            
-        # Generate and display AI response with streaming
+
+        # Show the AI's reply bubble and fill it word by word as the answer arrives
         with st.chat_message("assistant", avatar="🎓"):
-            placeholder = st.empty()  # Container for streaming response
-            full_reply = ""           # Accumulate complete response
-            
-            # Stream response chunks from Claude API
+            placeholder = st.empty()  # Empty box that we fill in as words stream in
+            full_reply = ""           # We collect the full answer here piece by piece
+
+            # Ask the AI and add each chunk to our growing answer
             for chunk in stream_response(st.session_state.messages, st.session_state.language):
                 full_reply += chunk
-                placeholder.markdown(full_reply + "▌")  # Show typing cursor during streaming
-            placeholder.markdown(full_reply)  # Remove cursor when complete
-            
-        # Save assistant response to conversation history
+                placeholder.markdown(full_reply + "▌")  # The ▌ looks like a blinking cursor while typing
+            placeholder.markdown(full_reply)  # Swap out the cursor once the full answer is ready
+
+        # Save the AI's finished answer to the message list
         st.session_state.messages.append({"role": "assistant", "content": full_reply})
-        st.rerun()  # Re-run to update UI with new messages
+        st.rerun()  # Refresh so the new messages display properly
 
 
-# ── TAB 2: FREQUENTLY ASKED QUESTIONS ───────────────────────────────────────────────────────
+# ── TAB 2: FREQUENTLY ASKED QUESTIONS ────────────────────────────────────────────────────────
 with tab_faq:
     st.markdown("### ❓ Frequently Asked Questions")
-    st.markdown("Instant answers — no AI call needed.")
+    st.markdown("Instant answers — no AI call needed.")  # These answers come from our list, not the AI
     st.markdown("---")
-    
-    # Display each FAQ as an expandable section
-    # Questions act as headers, answers are styled with custom CSS
+
+    # Loop through every question in our FAQS list and make a collapsible box for each one
+    # Clicking the question opens it up to reveal the answer underneath
     for faq in FAQS:
-        with st.expander(faq["q"]):  # Question becomes the expandable header
+        with st.expander(faq["q"]):  # The question text becomes the clickable heading
             st.markdown(
-                f'<div class="faq-answer">{faq["a"]}</div>',  # Style answer with custom CSS
-                unsafe_allow_html=True,
+                f'<div class="faq-answer">{faq["a"]}</div>',  # Wrap the answer in a styled box
+                unsafe_allow_html=True,  # Must be True so the HTML styling works
             )
 
 
-# ── TAB 3: CAMPUS COMPARISON ──────────────────────────────────────────────────
+# ── TAB 3: COMPARING THE SCHOOL CAMPUSES ─────────────────────────────────────────────────────
 with tab_campuses:
     st.markdown("### 🏫 Campus Comparison")
     st.markdown("Choose the campus that's right for your family.")
     st.markdown("---")
-    
-    # Create equal-width columns for campus cards
+
+    # Make one column for each campus so they appear side by side like trading cards
     cols = st.columns(len(CAMPUSES))
-    
-    # Display each campus in its own column with styled card
+
+    # Go through each campus and drop its information card into its column
     for col, campus in zip(cols, CAMPUSES):
         with col:
             st.markdown(
@@ -865,12 +826,12 @@ with tab_campuses:
                     <i>{campus['vibe']}</i>
                 </div>
             </div>""",
-                unsafe_allow_html=True,  # Use custom CSS for card styling
+                unsafe_allow_html=True,  # Must be True so the HTML card styling works
             )
-    st.markdown("---")  # Visual separator
+    st.markdown("---")  # Dividing line
     st.markdown("**Which campus suits your child?**")
-    
-    # Create two-column layout for campus recommendations
+
+    # Two info boxes side by side that help families choose between the two campuses
     ca, cb = st.columns(2)
     with ca:
         st.info(
@@ -878,138 +839,139 @@ with tab_campuses:
         )
     with cb:
         st.info(
-            "🌿 **La Moraleja** — ideal if you prefer a quieter, greener campus just outside the city."
+            "�� **La Moraleja** — ideal if you prefer a quieter, greener campus just outside the city."
         )
-        
-    # Call-to-action button for campus visits
+
+    # A big full-width button that takes families to the visit booking page
     st.link_button(
         "📅 Schedule a Visit",
         "https://www.brewstermadrid.com/admissions/visit-campus",
-        use_container_width=True,  # Make button full width
+        use_container_width=True,  # Stretch the button all the way across the screen
     )
 
 
-# ── TAB 4: UPCOMING EVENTS ─────────────────────────────────────────────────────────────
+# ── TAB 4: UPCOMING SCHOOL EVENTS ────────────────────────────────────────────────────────────
 with tab_events:
     st.markdown("### 📅 Upcoming Events")
     st.markdown("Join us — spaces are limited, book early!")
     st.markdown("---")
-    
-    # Display each event with styled card and registration button
+
+    # Loop through every event in our list and show a styled card plus a sign-up button
     for event in EVENTS:
-        # Choose badge icon based on event type
+        # Pick the right emoji: computer screen for online events, pin for in-person events
         badge = "🖥️" if event["type"] == "Virtual" else "📍"
-        
-        # Create styled event card with custom CSS
+
+        # Draw the event card with the gold left stripe using our CSS class
         st.markdown(
             f"""
         <div class="event-card">
             <div class="event-date">{badge} {event['type']} &nbsp;·&nbsp; {event['date']}</div>
             <div class="event-title">{event['title']}</div>
         </div>""",
-            unsafe_allow_html=True,
+            unsafe_allow_html=True,  # Must be True so the HTML card styling works
         )
-        
-        # Add registration button with event-specific link
+
+        # A button that takes the user straight to the registration page for that event
         st.link_button(f"Register → {event['title']}", event["link"])
-        st.markdown("")  # Add spacing between events
-        
-    st.markdown("---")  # Visual separator
-    
-    # Link to full school calendar
+        st.markdown("")  # A tiny bit of extra space between events
+
+    st.markdown("---")  # Dividing line at the bottom
+
+    # A simple text link to the full school calendar on the website
     st.markdown(
         "📆 Full calendar: [brewstermadrid.com/news-events/school-calendar](https://www.brewstermadrid.com/news-events/school-calendar)"
     )
 
 
-# ── TAB 5: ADMISSIONS CHECKLIST ───────────────────────────────────────────────
+# ── TAB 5: STEP-BY-STEP GUIDE TO APPLYING ────────────────────────────────────────────────────
 with tab_checklist:
     st.markdown("### ✅ Admissions Checklist")
     st.markdown("Your step-by-step guide to joining Brewster Madrid.")
     st.markdown("---")
-    
-    # Get current checklist progress from session state
+
+    # Grab the set of steps that are already ticked from our memory backpack
     done = st.session_state.checklist_done
-    
-    # Display each step as an interactive checkbox with description
+
+    # Loop through every step in the CHECKLIST list — i = step number, title/desc/link = details
     for i, (title, desc, link) in enumerate(CHECKLIST):
-        checked = i in done  # Check if this step is completed
-        
-        # Create layout: checkbox column + content column
+        checked = i in done  # True if this step has already been ticked
+
+        # Split the row into two parts: a tiny checkbox column and a big text column
         col_check, col_content = st.columns([0.08, 0.92])
-        
+
         with col_check:
-            # Interactive checkbox that updates session state when clicked
-            if st.checkbox("", value=checked, key=f"chk_{i}"):
-                done.add(i)  # Mark step as complete
+            # A real tickable checkbox — ticking it adds the step to 'done', unticking removes it
+            if st.checkbox("", value=checked, key=f"chk_{i}"):  # key must be unique per step
+                done.add(i)    # Mark this step as finished
             else:
-                done.discard(i)  # Remove completion status
-                
+                done.discard(i)  # Un-mark it if they untick
+
         with col_content:
-            # Apply strikethrough styling to completed steps
+            # If the step is done, add a strikethrough style so it looks crossed out
             style = "text-decoration: line-through; color: #aab0c0;" if checked else ""
             st.markdown(
                 f'<div style="{style}"><b>Step {i+1}: {title}</b><br>\n'
                 f'<span style="font-size:0.85rem;color:#4a5568;">{desc}</span></div>',
-                unsafe_allow_html=True,
+                unsafe_allow_html=True,  # Must be True so the inline style works
             )
-            
-            # Add clickable link if one is provided for this step
+
+            # If this step has a link, show an arrow button to click
             if link:
                 st.markdown(f'[→ {title}]({link})')
-                
-        st.markdown("")  # Add spacing between steps
-        
-    # Display progress bar with completion percentage
+
+        st.markdown("")  # A tiny gap of space between each step
+
+    # Show a progress bar that fills up as more steps are ticked
+    # len(done) = how many steps done; len(CHECKLIST) = total steps
     st.progress(
         len(done) / len(CHECKLIST),
         text=f"Progress: {len(done)}/{len(CHECKLIST)} steps complete",
     )
-    
-    # Show success message when all steps are completed
+
+    # When every single step is ticked, show a big congratulations message
     if len(done) == len(CHECKLIST):
         st.success(
             "🎉 All steps complete! The Brewster Madrid team looks forward to welcoming your family."
         )
 
 
-# ── TAB 6: MEET THE TEAM ──────────────────────────────────────────────────────
+# ── TAB 6: MEET THE PEOPLE WHO RUN THE SCHOOL ────────────────────────────────────────────────
 with tab_team:
     st.markdown("### 👥 Meet the Team")
     st.markdown("Click on a name to learn more about the person.")
     st.markdown("---")
-    
-    # Display each team member as an expandable section
+
+    # Loop through each staff member and create a collapsible box for them
     for member in TEAM:
-        with st.expander(f"**{member['name']}** · {member['role']}"):
-            # Create layout: avatar column + biography column
+        with st.expander(f"**{member['name']}** · {member['role']}"):  # Name + job title = the heading
+            # Split into two columns: a small circle avatar on the left, bio text on the right
             col_avatar, col_bio = st.columns([0.12, 0.88])
-            
+
             with col_avatar:
-                # Display styled avatar with member initials
+                # Show the person's initials inside a coloured circle (like a profile picture)
                 st.markdown(
                     f'<div class="team-avatar" style="margin:0;">{member["initials"]}</div>',
-                    unsafe_allow_html=True,
+                    unsafe_allow_html=True,  # Must be True so the HTML circle works
                 )
-                
+
             with col_bio:
-                # Display role and biography with custom styling
+                # Show the job title in gold and then the full biography below it
                 st.markdown(
                     f'<div class="team-role">{member["role"]}</div>'
                     f'<div class="team-bio">{member["bio"]}</div>',
-                    unsafe_allow_html=True,
+                    unsafe_allow_html=True,  # Must be True so the styled divs work
                 )
-                
-    st.markdown("---")  # Visual separator
-    
-    # Link to more detailed team information on the school website
+
+    st.markdown("---")  # Dividing line at the bottom
+
+    # A plain text link to the school website for more information about the team
     st.markdown(
         "Learn more about our leadership team at "
         "[brewstermadrid.com/about](https://www.brewstermadrid.com/about)"
     )
 
 
-# ── TAB 7: ACADEMICS DEEP-DIVE ────────────────────────────────────────────────
+# ── TAB 7: DEEP DIVE INTO HOW THE SCHOOL TEACHES ─────────────────────────────────────────────
 with tab_academics:
     st.markdown("### 📚 Academics Deep-Dive")
     st.markdown(
@@ -1017,22 +979,22 @@ with tab_academics:
         "flows through every division. Click a school level to see what to expect."
     )
     st.markdown("---")
-    
-    # Display each school division as an expandable section
+
+    # Loop through Lower School, Middle School, and Upper School and show each as a foldable section
     for div in SCHOOL_DIVISIONS:
-        with st.expander(f"{div['emoji']} **{div['name']}** · {div['grades']}"):
-            # Display the division's educational philosophy/tagline
+        with st.expander(f"{div['emoji']} **{div['name']}** · {div['grades']}"):  # Emoji + name + grades = heading
+            # Show the short inspiring description of that school level in italic
             st.markdown(f"*{div['tagline']}*")
-            
-            # List what students and families can expect in this division
+
+            # Show each bullet point that describes what kids get to do at that level
             for point in div["expect"]:
                 st.markdown(f"- {point}")
-                
-    st.markdown("---")  # Visual separator
-    
-    # Call-to-action button for more detailed academic information
+
+    st.markdown("---")  # Dividing line at the bottom
+
+    # A full-width button that links to the school website for more academic details
     st.link_button(
         "📄 Academic Programmes",
         "https://www.brewstermadrid.com/academics",
-        use_container_width=True,  # Make button full width
+        use_container_width=True,  # Stretch the button all the way across the screen
     )

@@ -1,68 +1,68 @@
-# Import required libraries for the Streamlit web application
-import streamlit as st          # Web framework for creating the chatbot interface
-import anthropic               # AI client for Claude API integration
-import datetime                # Date/time utilities (currently imported but not actively used)
+# We need to bring in some helpers (like asking a friend who knows how to do stuff)
+import streamlit as st          # This helper builds our website and makes all the buttons and pages
+import anthropic               # This helper lets us talk to the smart AI (Claude) that answers questions
+import datetime                # This helper knows about dates and times (we brought it in but don't use it yet)
 
-# PRIVACY NOTICE: This is a privacy-focused version of the chatbot
-# Key privacy features implemented:
-# - No conversation transcript logging (removed conversation_log and CSV export functionality)
-# - No Admin tab (removed administrative access to user data)
-# - Per-message 👍/👎 feedback is stored only in the current Streamlit session (not persisted)
-# This ensures user conversations are not permanently stored or accessible after the session ends
+# IMPORTANT PRIVACY NOTE:
+# This chatbot is designed to be safe and private — like a conversation that stays just between you and your friend
+# - We do NOT save the whole conversation (no recording what people said)
+# - There is NO secret admin page where someone can peek at your chat
+# - The thumbs-up / thumbs-down buttons only remember your choice while you have the page open
+# When you close the tab, everything you typed disappears — nothing is saved forever
 
-# ── PAGE CONFIGURATION ───────────────────────────────────────────────────────────────
-# Configure the Streamlit page with metadata and layout settings
+# ── PAGE SETUP ─────────────────────────────────────────────────────────────────────────
+# This tells the website what to look like before anything is shown to the user
 st.set_page_config(
-    page_title="Brewster Madrid · School Assistant",  # Browser tab title
-    page_icon="🎓",                                   # Favicon displayed in browser tab
-    layout="wide",                                    # Use full width of browser window
+    page_title="Brewster Madrid · School Assistant",  # The name that shows up in the browser tab at the top of your screen
+    page_icon="🎓",                                   # The tiny picture (emoji) that appears next to the tab name
+    layout="wide",                                    # Use the whole wide screen instead of a narrow column in the middle
 )
 
-# ── CUSTOM STYLESHEET ─────────────────────────────────────────────────────────────────
-# Inject custom CSS to style the application with Brewster Madrid branding
-# This creates a professional, cohesive visual experience throughout the app
+# ── MAKING IT LOOK PRETTY ──────────────────────────────────────────────────────────────
+# This is like giving the website a costume — we pick colors, fonts, and shapes for everything
+# CSS is the special language that tells browsers how to make things look nice
 st.markdown("""
 <style>
-/* Import Google Fonts for typography */
+/* Load special fonts from the internet so the text looks fancy */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap');
 
-/* Apply base font family to all elements */
+/* Make ALL the text on the page use the same clean font */
 html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 
-/* Header section styling - main title and subtitle */
+/* The big title at the top of the page — center it and give it some space */
 .brew-header { text-align: center; padding: 1.2rem 0 0.4rem; }
 .brew-title  { font-family: 'Playfair Display', serif; font-size: 2rem; color: #1a2744; margin-bottom: 0.2rem; }
-.brew-title span { color: #c9a84c; }  /* "Madrid" in gold accent color */
+.brew-title span { color: #c9a84c; }  /* The word "Madrid" gets a shiny gold color */
 .brew-sub    { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8896b0; }
 .brew-divider { height: 2px; background: linear-gradient(90deg,transparent,#c9a84c,transparent);
-                border: none; margin: 0.6rem auto; width: 60%; }  /* Gold gradient divider */
+                border: none; margin: 0.6rem auto; width: 60%; }  /* A thin gold line that fades at the edges */
 
-/* Statistics boxes - display key school metrics in the chat tab */
+/* Little boxes that show cool school numbers like "400+ students" */
 .stat-box { background: #f4f6fb; border-radius: 12px; padding: 1rem; text-align: center; border: 1px solid #e2ddd4; }
-.stat-num { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #1a2744; }  /* Large numbers */
-.stat-lbl { font-size: 0.72rem; color: #8896b0; text-transform: uppercase; letter-spacing: 0.08em; }  /* Small labels */
+.stat-num { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #1a2744; }  /* The big number */
+.stat-lbl { font-size: 0.72rem; color: #8896b0; text-transform: uppercase; letter-spacing: 0.08em; }  /* The small label below the number */
 
-/* Campus comparison cards in the Campuses tab */
+/* Cards that show information about each school campus (location) */
 .campus-card { background: #fff; border: 1px solid #e2ddd4; border-radius: 14px; padding: 1.2rem; margin-bottom: 0.8rem; }
 .campus-name { font-family: 'Playfair Display', serif; color: #1a2744; font-size: 1.1rem; margin-bottom: 0.3rem; }
 .campus-detail { font-size: 0.82rem; color: #4a5568; line-height: 1.7; }
 
-/* Event cards in the Events tab - left border accent for visual hierarchy */
+/* Cards that show school events — they have a gold stripe on the left side like a bookmark */
 .event-card { background: #fff; border-left: 4px solid #c9a84c; border-radius: 0 10px 10px 0;
               padding: 0.8rem 1rem; margin-bottom: 0.6rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 .event-date { font-size: 0.72rem; color: #c9a84c; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
 .event-title { color: #1a2744; font-weight: 600; font-size: 0.92rem; }
 
-/* FAQ answer styling - light background to distinguish from questions */
+/* The box where FAQ answers appear — light blue-grey background so it stands out */
 .faq-answer { background: #f4f6fb; border-radius: 10px; padding: 0.9rem 1rem;
               font-size: 0.88rem; color: #4a5568; line-height: 1.7; margin-top: 0.3rem; }
 
-/* Team member cards in the Meet the Team tab */
+/* Cards for each staff member in the "Meet the Team" section */
 .team-card { background: #fff; border: 1px solid #e2ddd4; border-radius: 16px;
              padding: 1.4rem 1.2rem; text-align: center; margin-bottom: 0.8rem;
              box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
 .team-avatar { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 0.8rem;
-               background: linear-gradient(135deg,#1a2744,#c9a84c);  /* School colors gradient */
+               background: linear-gradient(135deg,#1a2744,#c9a84c);  /* Circle with school colors fading into each other */
                display: flex; align-items: center; justify-content: center;
                font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #fff; }
 .team-name  { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: #1a2744; margin-bottom: 0.15rem; }
@@ -70,7 +70,7 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
               letter-spacing: 0.08em; margin-bottom: 0.7rem; }
 .team-bio   { font-size: 0.82rem; color: #4a5568; line-height: 1.7; text-align: left; }
 
-/* School division cards in the Academics tab */
+/* Cards for each grade division (Lower, Middle, Upper School) — gold stripe on top like a hat */
 .division-card { background: #fff; border-top: 4px solid #c9a84c; border-radius: 0 0 14px 14px;
                  border-left: 1px solid #e2ddd4; border-right: 1px solid #e2ddd4;
                  border-bottom: 1px solid #e2ddd4; padding: 1.3rem; margin-bottom: 0.8rem; }
@@ -82,10 +82,10 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── KNOWLEDGE BASE ─────────────────────────────────────────────────────────────
-# Comprehensive school information database that serves as the foundation for all AI responses
-# This ensures the chatbot provides accurate, consistent information about Brewster Madrid
-# The knowledge base is embedded into the Claude system prompt for every API call
+# ── THE SCHOOL'S FACT BOOK ────────────────────────────────────────────────────────
+# Think of this like a giant encyclopedia page about Brewster Madrid
+# Whenever someone asks the AI a question, we secretly slip this whole fact book to it
+# so it can give accurate, correct answers about the school
 SCHOOL_KNOWLEDGE = """
 OVERVIEW
 - Full name: Brewster Madrid (part of BA International, LLC — a branch of Brewster Academy)

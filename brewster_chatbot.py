@@ -25,7 +25,7 @@ st.set_page_config(
 # Expected secrets structure:
 #   [credentials.usernames.alice]
 #   name     = "Alice Smith"
-#   password = "<bcrypt hash>"   ← generate with stauth.Hasher(['mypassword']).generate()
+#   password = "<bcrypt hash>"   ← generate with stauth.Hasher.hash('mypassword')
 #   [cookie]
 #   name     = "brewster_auth"
 #   key      = "<random secret string>"

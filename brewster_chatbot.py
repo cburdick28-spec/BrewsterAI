@@ -2,6 +2,7 @@
 import streamlit as st          # This helper builds our website and makes all the buttons and pages
 import anthropic               # This helper lets us talk to the smart AI (Claude) that answers questions
 import datetime                # This helper knows about dates and times (we brought it in but don't use it yet)
+import streamlit_authenticator as stauth  # This helper adds a login screen so only authorized users can access the app
 
 # IMPORTANT PRIVACY NOTE:
 # This chatbot is designed to be safe and private — like a conversation that stays just between you and your friend
@@ -17,6 +18,43 @@ st.set_page_config(
     page_icon="🎓",                                   # The tiny picture (emoji) that appears next to the tab name like in Gmail it has a colorfull M
     layout="wide",                                    # Use the whole wide screen instead of a narrow column in the middle
 )
+
+# ── AUTHENTICATION SETUP ───────────────────────────────────────────────────────────────
+# We build a login screen so only people with a username and password can use the app
+# Credentials are stored in Streamlit Secrets (Settings → Secrets) — never hard-coded here
+# Expected secrets structure:
+#   [credentials.usernames.alice]
+#   name     = "Alice Smith"
+#   password = "<bcrypt hash>"   ← generate with stauth.Hasher.hash('mypassword')
+#   [cookie]
+#   name     = "brewster_auth"
+#   key      = "<random secret string>"
+#   expiry_days = 7
+if "credentials" not in st.secrets:
+    st.error(
+        "⚠️ **Authentication not configured.** "
+        "Please add `credentials` and `cookie` sections to your Streamlit Secrets and reload the app."
+    )
+    st.stop()
+
+_authenticator = stauth.Authenticate(
+    dict(st.secrets["credentials"]),   # Username/password pairs (passwords must be bcrypt-hashed)
+    st.secrets["cookie"]["name"],      # Name of the browser cookie used to remember the session
+    st.secrets["cookie"]["key"],       # Secret key used to sign the cookie (keep this private!)
+    st.secrets["cookie"].get("expiry_days", 7),  # How many days the cookie stays valid
+)
+
+# Show the login form and wait for the user to sign in
+_authenticator.login()
+
+# Check what happened after the user filled in the form
+if st.session_state.get("authentication_status") is False:
+    st.error("❌ Incorrect username or password. Please try again.")
+    st.stop()  # Don't show any app content if the login failed
+
+if st.session_state.get("authentication_status") is None:
+    st.info("👋 Please log in to access the Brewster Madrid Assistant.")
+    st.stop()  # Don't show any app content until the user has logged in
 
 # ── MAKING IT LOOK PRETTY ──────────────────────────────────────────────────────────────
 # This is like giving the website a costume — we pick colors, fonts, and shapes for everything
@@ -622,6 +660,13 @@ with st.sidebar:
         st.session_state.messages = []       # Delete all the saved messages
         st.session_state.feedback_map = {}   # Delete all the thumbs up/down votes too
         st.rerun()  # Refresh so the empty chat appears straight away
+
+    st.markdown("---")
+
+    # ── LOGOUT BUTTON ────────────────────────────────────────────────────────────────────
+    # Shows who is logged in and lets them sign out — this clears the session cookie
+    st.markdown(f"👤 Signed in as **{st.session_state.get('name', '')}**")
+    _authenticator.logout("🔒 Log Out", location="main")
 
     st.markdown("---")
     # Show a small privacy reminder at the bottom of the sidebar

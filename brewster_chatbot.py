@@ -13,14 +13,14 @@ import datetime                # This helper knows about dates and times (we bro
 # ── PAGE SETUP ─────────────────────────────────────────────────────────────────────────
 # This tells the website what to look like before anything is shown to the user
 st.set_page_config(
-    page_title="Brewster Madrid · School Assistant",  # The name that shows up in the browser tab at the top of your screen
-    page_icon="🎓",                                   # The tiny picture (emoji) that appears next to the tab name
+    page_title="Brewster Madrid · School Assistant",  # The name that shows up in the browser tab at the top of your screen like when you do youtube.com it says youtube
+    page_icon="🎓",                                   # The tiny picture (emoji) that appears next to the tab name like in Gmail it has a colorfull M
     layout="wide",                                    # Use the whole wide screen instead of a narrow column in the middle
 )
 
 # ── MAKING IT LOOK PRETTY ──────────────────────────────────────────────────────────────
 # This is like giving the website a costume — we pick colors, fonts, and shapes for everything
-# CSS is the special language that tells browsers how to make things look nice
+# CSS (Cascading Style Sheets) is the special language that tells browsers how to make things look nice
 st.markdown("""
 <style>
 /* Load special fonts from the internet so the text looks fancy */
@@ -85,7 +85,7 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 # ── THE SCHOOL'S FACT BOOK ────────────────────────────────────────────────────────
 # Think of this like a giant encyclopedia page about Brewster Madrid
 # Whenever someone asks the AI a question, we secretly slip this whole fact book to it
-# so it can give accurate, correct answers about the school
+# so it can give accurate, correct answers about the school without having to use the internet to gather large groups of data online that may cause delay
 SCHOOL_KNOWLEDGE = """
 OVERVIEW
 - Full name: Brewster Madrid (part of BA International, LLC — a branch of Brewster Academy)
@@ -215,6 +215,7 @@ USEFUL LINKS
 
 # This function builds the "instructions" we give the AI before every conversation
 # Think of it like telling a substitute teacher the classroom rules before they start
+# Another example is giving your teammates in a sport what to do during this play
 # We tell the AI: who it is, what language to speak, and give it the school fact book
 def build_system_prompt(language="English"):
     # Figure out which language the AI should reply in
@@ -226,7 +227,9 @@ def build_system_prompt(language="English"):
     )
 
     # Stick everything together into one big set of instructions for the AI
-    # This becomes the AI's "brain briefing" before it answers any question
+    # This becomes the AI's "brain briefing" before it answers any question 
+    #This also has a character limit so it doesn't cause lag
+    #It also only looks at the info and not at anything else
     return f"""You are the friendly and knowledgeable virtual assistant for Brewster Madrid,
 an American K-12 school with campuses in Madrid, Spain. {lang_instruction}
 Use the school knowledge below to answer accurately. Be warm, concise, and welcoming.
@@ -301,6 +304,7 @@ FAQS = [
 
 # A list of upcoming school events (like open days when families can visit)
 # Each event has a date, a name, whether it's online or in person, and a link to sign up
+# Sadly doesn't auto update
 EVENTS = [
     {
         "date": "April 9, 2026 · 7:00 PM",
@@ -396,6 +400,7 @@ CHECKLIST = [
 
 # Recent news stories from the school — like the headlines in a school newsletter
 # Each one has the month it was posted, the story title, and a link to read the full article
+#This allows people to see what life is like
 NEWS = [
     (
         "Mar 2026",
@@ -467,7 +472,7 @@ TEAM = [
     },
 ]
 
-# Information about the three school levels (young kids, middle kids, older kids)
+# Information about the three school levels (young kids, middle kids, older kids) or lower school, middle school or uperschool
 # Each section has an emoji, the name, the grade range, a tagline, and a list of things students get to do there
 SCHOOL_DIVISIONS = [
     {

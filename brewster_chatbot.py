@@ -3,6 +3,7 @@ import streamlit as st          # This helper builds our website and makes all t
 import anthropic               # This helper lets us talk to the smart AI (Claude) that answers questions
 import datetime                # This helper knows about dates and times (we brought it in but don't use it yet)
 import os                      # This helper lets us work with file paths on the computer
+import re                      # This helper lets us check if text matches a pattern (used to validate usernames)
 import yaml                    # This helper reads and writes YAML files (used to store registered users)
 import streamlit_authenticator as stauth  # This helper adds a login screen so only authorized users can access the app
 
@@ -43,7 +44,7 @@ _USERS_YAML = os.path.join(os.path.dirname(os.path.abspath(__file__)), "users.ya
 def _load_yaml_users():
     """Return the usernames dict from users.yaml, or {} if the file is missing or empty."""
     try:
-        with open(_USERS_YAML) as _f:
+        with open(_USERS_YAML, encoding="utf-8") as _f:
             _data = yaml.safe_load(_f) or {}
         return _data.get("usernames", {})
     except FileNotFoundError:
@@ -52,7 +53,7 @@ def _load_yaml_users():
 
 def _save_yaml_users(usernames_dict):
     """Write the given usernames dict back to users.yaml."""
-    with open(_USERS_YAML, "w") as _f:
+    with open(_USERS_YAML, "w", encoding="utf-8") as _f:
         yaml.safe_dump({"usernames": usernames_dict}, _f)
 
 
@@ -104,7 +105,7 @@ if st.session_state.get("authentication_status") is not True:
         )
         with st.form("_reg_form"):
             _reg_name     = st.text_input("Full Name")
-            _reg_username = st.text_input("Username  (letters, numbers and underscores only)")
+            _reg_username = st.text_input("Username (letters, numbers and underscores only)")
             _reg_password = st.text_input("Password", type="password")
             _reg_confirm  = st.text_input("Confirm Password", type="password")
             _reg_submit   = st.form_submit_button("✅ Create Account")
@@ -118,10 +119,10 @@ if st.session_state.get("authentication_status") is not True:
                 _errs.append("Full name is required.")
             if not _reg_username.strip():
                 _errs.append("Username is required.")
-            elif not _reg_username.strip().replace("_", "").isalnum():
+            elif not re.match(r"^[A-Za-z0-9_]+$", _reg_username.strip()):
                 _errs.append("Username may only contain letters, numbers, and underscores.")
-            if len(_reg_password) < 6:
-                _errs.append("Password must be at least 6 characters long.")
+            if len(_reg_password) < 8:
+                _errs.append("Password must be at least 8 characters long.")
             if _reg_password != _reg_confirm:
                 _errs.append("Passwords do not match.")
             if _reg_username.strip() in _fresh["usernames"]:

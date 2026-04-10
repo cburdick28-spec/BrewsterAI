@@ -2,7 +2,7 @@
 import streamlit as st          # This helper builds our website and makes all the buttons and pages
 import anthropic               # This helper lets us talk to the smart AI (Claude) that answers questions
 import datetime                # This helper knows about dates and times (we brought it in but don't use it yet)
-import streamlit_authenticator as stauth  # This helper adds a login screen so only authorised users can access the app
+import streamlit_authenticator as stauth  # This helper adds a login screen so only authorized users can access the app
 
 # IMPORTANT PRIVACY NOTE:
 # This chatbot is designed to be safe and private — like a conversation that stays just between you and your friend

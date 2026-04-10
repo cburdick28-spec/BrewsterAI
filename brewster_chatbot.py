@@ -2,6 +2,8 @@
 import streamlit as st          # This helper builds our website and makes all the buttons and pages
 import anthropic               # This helper lets us talk to the smart AI (Claude) that answers questions
 import datetime                # This helper knows about dates and times (we brought it in but don't use it yet)
+import os                      # This helper lets us work with file paths on the computer
+import yaml                    # This helper reads and writes YAML files (used to store registered users)
 import streamlit_authenticator as stauth  # This helper adds a login screen so only authorized users can access the app
 
 # IMPORTANT PRIVACY NOTE:
@@ -20,41 +22,131 @@ st.set_page_config(
 )
 
 # ── AUTHENTICATION SETUP ───────────────────────────────────────────────────────────────
-# We build a login screen so only people with a username and password can use the app
-# Credentials are stored in Streamlit Secrets (Settings → Secrets) — never hard-coded here
-# Expected secrets structure:
-#   [credentials.usernames.alice]
-#   name     = "Alice Smith"
-#   password = "<$2b$12$Jo4eQX6wPdVyYLk5DjRrzOUNjkJ628hCwEYhBl4qAVqp2KQyJCrve>"   ← generate with stauth.Hasher.hash('mypassword')
-#   [cookie]
-#   name     = "brewster_auth"
-#   key      = "<random secret string>"
-#   expiry_days = 7
-if "credentials" not in st.secrets:
+# Users can come from two sources that are merged together at startup:
+#   1. Streamlit Secrets  — admin-created accounts (Settings → Secrets in Streamlit Cloud)
+#      [credentials.usernames.alice]
+#      name     = "Alice Smith"
+#      password = "<bcrypt hash>"   ← generate with stauth.Hasher.hash('mypassword')
+#      [cookie]
+#      name        = "brewster_auth"
+#      key         = "<random secret string>"
+#      expiry_days = 7
+#
+#   2. users.yaml — self-registered accounts created via the Register screen in the app
+#      New registrations are written here automatically.
+#      Tip: copy important accounts into Streamlit Secrets for permanent storage.
+
+# Path to the YAML file that persists self-registered users
+_USERS_YAML = os.path.join(os.path.dirname(os.path.abspath(__file__)), "users.yaml")
+
+
+def _load_yaml_users():
+    """Return the usernames dict from users.yaml, or {} if the file is missing or empty."""
+    try:
+        with open(_USERS_YAML) as _f:
+            _data = yaml.safe_load(_f) or {}
+        return _data.get("usernames", {})
+    except FileNotFoundError:
+        return {}
+
+
+def _save_yaml_users(usernames_dict):
+    """Write the given usernames dict back to users.yaml."""
+    with open(_USERS_YAML, "w") as _f:
+        yaml.safe_dump({"usernames": usernames_dict}, _f)
+
+
+def _build_merged_credentials():
+    """Merge admin accounts (Secrets) with self-registered accounts (YAML) into one dict.
+    Secrets always take precedence if the same username appears in both."""
+    secrets_users = {}
+    if "credentials" in st.secrets:
+        secrets_users = dict(st.secrets["credentials"]).get("usernames", {})
+    yaml_users = _load_yaml_users()
+    return {"usernames": {**yaml_users, **secrets_users}}
+
+
+# The cookie section is always required — it signs the session cookie
+if "cookie" not in st.secrets:
     st.error(
-        "⚠️ **Authentication not configured.** "
-        "Please add `credentials` and `cookie` sections to your Streamlit Secrets and reload the app."
+        "⚠️ **Cookie configuration missing.** "
+        "Please add a `[cookie]` section to your Streamlit Secrets and reload the app."
     )
     st.stop()
 
+_credentials = _build_merged_credentials()
+
 _authenticator = stauth.Authenticate(
-    dict(st.secrets["credentials"]),   # Username/password pairs (passwords must be bcrypt-hashed)
+    _credentials,
     st.secrets["cookie"]["name"],      # Name of the browser cookie used to remember the session
     st.secrets["cookie"]["key"],       # Secret key used to sign the cookie (keep this private!)
     st.secrets["cookie"].get("expiry_days", 7),  # How many days the cookie stays valid
 )
 
-# Show the login form and wait for the user to sign in
-_authenticator.login()
+# ── PRE-AUTH: LOGIN / REGISTER TABS ───────────────────────────────────────────────────
+# Show login and registration options when the user is not yet authenticated.
+# Once authenticated, this block is skipped and the main app runs.
+if st.session_state.get("authentication_status") is not True:
+    _login_tab, _register_tab = st.tabs(["🔐 Log In", "📝 Register"])
 
-# Check what happened after the user filled in the form
-if st.session_state.get("authentication_status") is False:
-    st.error("❌ Incorrect username or password. Please try again.")
-    st.stop()  # Don't show any app content if the login failed
+    with _login_tab:
+        _authenticator.login()
+        if st.session_state.get("authentication_status") is False:
+            st.error("❌ Incorrect username or password. Please try again.")
+        else:
+            st.info("👋 Please log in to access the Brewster Madrid Assistant.")
 
-if st.session_state.get("authentication_status") is None:
-    st.info("👋 Please log in to access the Brewster Madrid Assistant.")
-    st.stop()  # Don't show any app content until the user has logged in
+    with _register_tab:
+        st.markdown("### 📝 Create an Account")
+        st.markdown(
+            "Fill in the form below to register. Once your account is created, "
+            "switch to the **Log In** tab to sign in."
+        )
+        with st.form("_reg_form"):
+            _reg_name     = st.text_input("Full Name")
+            _reg_username = st.text_input("Username  (letters, numbers and underscores only)")
+            _reg_password = st.text_input("Password", type="password")
+            _reg_confirm  = st.text_input("Confirm Password", type="password")
+            _reg_submit   = st.form_submit_button("✅ Create Account")
+
+        if _reg_submit:
+            # Re-read credentials so concurrent registrations don't overwrite each other
+            _fresh = _build_merged_credentials()
+            _errs  = []
+
+            if not _reg_name.strip():
+                _errs.append("Full name is required.")
+            if not _reg_username.strip():
+                _errs.append("Username is required.")
+            elif not _reg_username.strip().replace("_", "").isalnum():
+                _errs.append("Username may only contain letters, numbers, and underscores.")
+            if len(_reg_password) < 6:
+                _errs.append("Password must be at least 6 characters long.")
+            if _reg_password != _reg_confirm:
+                _errs.append("Passwords do not match.")
+            if _reg_username.strip() in _fresh["usernames"]:
+                _errs.append(
+                    f"The username **{_reg_username.strip()}** is already taken. "
+                    "Please choose a different one."
+                )
+
+            if _errs:
+                for _e in _errs:
+                    st.error(_e)
+            else:
+                _hashed     = stauth.Hasher.hash(_reg_password)
+                _yaml_users = _load_yaml_users()
+                _yaml_users[_reg_username.strip()] = {
+                    "name":     _reg_name.strip(),
+                    "password": _hashed,
+                }
+                _save_yaml_users(_yaml_users)
+                st.success(
+                    f"✅ Account created for **{_reg_name.strip()}**! "
+                    "Switch to the **Log In** tab and sign in with your new credentials."
+                )
+
+    st.stop()  # Don't render any app content until the user is authenticated
 
 # ── MAKING IT LOOK PRETTY ──────────────────────────────────────────────────────────────
 # This is like giving the website a costume — we pick colors, fonts, and shapes for everything
